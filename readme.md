@@ -1,5 +1,6 @@
 ## Images
 [Screeshot 1](https://raw.githubusercontent.com/JBWKZ2099/ogame-necessary-cargo/master/screenshots/v1.2.png)
+
 [Screeshot 2 - Config Panel](https://raw.githubusercontent.com/JBWKZ2099/ogame-necessary-cargo/master/screenshots/v1.2-config-panel.png)
 
 

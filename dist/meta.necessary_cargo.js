@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Necessary cargo ships
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Displays necessary cargo ships to move / transport the resources
 // @author       JBWKZ2099
 // @updateURL    https://raw.githubusercontent.com/JBWKZ2099/ogame-necessary-cargo/master/dist/meta.remaining_fields.js

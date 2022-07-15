@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Necessary cargo ships
 // @namespace    necessary_cargo
-// @version      1.2
+// @version      1.3
 // @description  Displays necessary cargo ships to move / transport the resources
 // @author       JBWKZ2099
 // @homepageURL  https://github.com/JBWKZ2099/ogame-necessary-cargo
@@ -154,6 +154,81 @@
                     height: 14px;
                     cursor: pointer;
                 }
+
+                .ncs-text-center {
+                    text-align: center !important;
+                }
+
+                .tbl-necesary-cargo {
+                    width: 639px;
+                    padding: 0 7px 4px;
+                    margin: 10px 0 5px 15px;
+                    vertical-align: top;
+                    border: 1px solid #050505;
+                    border-radius: 5px;
+                    background: linear-gradient(to bottom, #192026 0, #0d1014 13%, #0d1014 100%);
+                    position: relative;
+                    z-index: 2;
+                }
+
+                .tbl-necesary-cargo thead th { padding-top: 5px; padding-bottom: 10px; }
+                .tbl-necesary-cargo tbody > tr > td { padding-top: 2px; padding-bottom: 2px; }
+                .tbl-necesary-cargo tbody > tr > td { border: 1px solid transparent; }
+                .tbl-necesary-cargo tbody > tr > td:first-child {
+                    border-top-left-radius: 3px;
+                    border-bottom-left-radius: 3px;
+                }
+                .tbl-necesary-cargo tbody > tr > td:last-child {
+                    border-top-right-radius: 3px;
+                    border-bottom-right-radius: 3px;
+                }
+                .tbl-necesary-cargo tbody > tr:hover > td,
+                .tbl-necesary-cargo tbody > tr.current > td {
+                    color: #2FE000;
+                    background-color: #182028;
+                }
+
+                .tbl-necesary-cargo tbody > tr.current > td {
+                    border-top: 1px solid #2FE000;
+                    border-bottom: 1px solid #2FE000;
+                }
+                .tbl-necesary-cargo tbody > tr.current > td:first-child {
+                    border-left: 1px solid #2FE000;
+                }
+                .tbl-necesary-cargo tbody > tr.current > td:last-child {
+                    border-right: 1px solid #2FE000;
+                }
+
+                .ncs-text-blue { color: #6f9fc8 !important; }
+                .btn-sub, .btn-tot { cursor: pointer; }
+
+                .ncs-planet-img {
+                    width: 27px;
+                    margin-left: 5px;
+                    background-size: 81px 44px;
+                }
+
+                .ncs-koords span {
+                    margin-left: 5px;
+                    background: url("https://gf2.geo.gfsrv.net/cdn40/b63220183e356430158dc998a2bb99.gif") no-repeat 0 0;
+                    background-size: 70px 39px;
+                    display: inline-block;
+                    cursor: pointer;
+                    vertical-align: middle;
+                }
+                .ncs-koords span.planet {
+                    width: 24px;
+                    height: 20px;
+                    background-position: 0 0;
+                }
+                .ncs-koords span.moon {
+                    width: 19px;
+                    height: 20px;
+                    background-position: -26px 0;
+                }
+
+                .ncs-koords span.planet.selected { background-position: 0 -19px; }
+                .ncs-koords span.moon.selected { background-position: -26px -19px; }
             `;
 
         if( player_class.hasClass("miner") )
@@ -186,8 +261,8 @@
         $("html head").append(`<style>${css}</style>`);
         $("#pageContent #resourcesbarcomponent").append(`
             <div class="necesary-cargo">
-                <span class="ncp">NCP: ${sub_ncp} (${( sub_ncp==tot_ncp ? 0 : tot_ncp )})</span>
-                <span class="ncg">NCG: ${sub_ncg} (${( sub_ncg==tot_ncg ? 0 : tot_ncg )})</span>
+                <span class="ncp">NPC: ${sub_ncp} (${( sub_ncp==tot_ncp ? 0 : tot_ncp )})</span>
+                <span class="ncg">NGC: ${sub_ncg} (${( sub_ncg==tot_ncg ? 0 : tot_ncg )})</span>
                 <span class="rec">REC: ${sub_rec} (${( sub_rec==tot_rec ? 0 : tot_rec )})</span>
                 <span class="pf">PF: ${sub_pf} (${( sub_pf==tot_pf ? 0 : tot_pf )})</span>
 
@@ -200,16 +275,21 @@
 
     $(document).on("click", "#ncs-config", function(e){
         e.preventDefault();
+        var main_content_div = "#middle .maincontent > div";
+
+        if( theHref.indexOf("/game/index.php?page=ingame&component=fleetdispatch")>-1 ) {
+            main_content_div = `#middle .maincontent > div#fleet1`;
+        }
 
         if( !$(document).find("#ncsp_window").is(":visible") ) {
-            $("#middle .maincontent > div").hide();
+            $(main_content_div).hide();
             $(".maincontent").css({"z-index": "10"});
             $(document).find("#ncsp_window").show();
             $(this).addClass("selected");
         } else {
             $(".maincontent").removeAttr("style");
             $(document).find("#ncsp_window").hide();
-            $("#middle .maincontent > div").show();
+            $(main_content_div).show();
             $(".dinamic-jbwkz2099").hide();
             $(this).removeClass("selected");
         }
@@ -277,6 +357,130 @@
         }
     });
 
+
+
+
+    /*Funcionalidad para almacenar la cantidad de naves necesarias en cada planeta*/
+        var current_settings = JSON.parse( JSON.parse(localStorage.getItem(_localstorage_varname)).config );
+        var myPlanetList = {};
+        var new_pl_sett = {};
+        var planetKoords = $("#myPlanets #planetList > div.hightlightPlanet .planet-koords").text();
+        var moonKoords = $("#myPlanets #planetList > div.hightlightMoon .planet-koords").length;
+        var _moonKoords = $("#myPlanets #planetList > div.hightlightMoon .planet-koords").text();
+
+        if( typeof current_settings["planetList"]==="undefined" ) {
+            var plist = {};
+            var new_sett = {};
+
+            current_settings["planetList"] = {};
+            new_sett["config"] = JSON.stringify(current_settings);
+            localStorage.setItem(_localstorage_varname, JSON.stringify(new_sett));
+            myPlanetList[planetKoords] = {};
+        } else {
+            if( moonKoords==0 ) {
+                myPlanetList = settings.planetList;
+                myPlanetList[planetKoords] = {};
+            }
+        }
+
+        if( moonKoords==0 ) {
+            myPlanetList[planetKoords]["sub_ncp"] = sub_ncp;
+            myPlanetList[planetKoords]["sub_ncg"] = sub_ncg;
+            myPlanetList[planetKoords]["sub_rec"] = sub_rec;
+            myPlanetList[planetKoords]["sub_pf"] = sub_pf;
+
+            myPlanetList[planetKoords]["tot_ncp"] = tot_ncp;
+            myPlanetList[planetKoords]["tot_ncg"] = tot_ncg;
+            myPlanetList[planetKoords]["tot_rec"] = tot_rec;
+            myPlanetList[planetKoords]["tot_pf"] = tot_pf;
+
+            current_settings["planetList"] = myPlanetList;
+            new_pl_sett["config"] = JSON.stringify(current_settings);
+            localStorage.setItem(_localstorage_varname, JSON.stringify(new_pl_sett));
+        }
+
+        if( theHref.indexOf("/game/index.php?page=ingame&component=fleetdispatch")>-1 ) {
+            var plist = null;
+            var plist = JSON.parse( JSON.parse(localStorage.getItem(_localstorage_varname)).config ).planetList;
+            plist = sortObjectByKeys(plist);
+
+            var table_plist = `
+                <table class="tbl-necesary-cargo">
+                    <thead>
+                        <th class="ncs-text-center ncs-text-blue">Objetivos</th>
+                        <th class="ncs-text-center ncs-text-blue">NPC</th>
+                        <th class="ncs-text-center ncs-text-blue">NGC</th>
+                        <th class="ncs-text-center ncs-text-blue">REC</th>
+                        <th class="ncs-text-center ncs-text-blue">PF</th>
+                    </thead>
+                    <tbody>`;
+
+            $.each(plist, function(i, el) {
+                table_plist += `
+                    <tr class="${( i==planetKoords || i==_moonKoords ? "current" : "" )}"">
+                        <td class="ncs-text-center ncs-koords" valign="middle">
+                            ${i}
+
+                            <span class="planet"></span>
+                            <span class="moon selected"></span>
+                        </td>
+                        <td class="ncs-text-center">
+                            <span class="btn-sub ncs-setup-ship" data-type="202" data-val="${(el.sub_ncp).replace(".","")}">${el.sub_ncp}</span> |
+                            <span class="btn-tot ncs-setup-ship" data-type="202" data-val="${(el.tot_ncp).replace(".","")}">${el.tot_ncp}</span>
+                        </td>
+                        <td class="ncs-text-center">
+                            <span class="btn-sub ncs-setup-ship" data-type="203" data-val="${(el.sub_ncg).replace(".","")}">${el.sub_ncg}</span> |
+                            <span class="btn-tot ncs-setup-ship" data-type="203" data-val="${(el.tot_ncg).replace(".","")}">${el.tot_ncg}</span>
+                        </td>
+                        <td class="ncs-text-center">
+                            <span class="btn-sub ncs-setup-ship" data-type="209" data-val="${(el.sub_rec).replace(".","")}">${el.sub_rec}</span> |
+                            <span class="btn-tot ncs-setup-ship" data-type="209" data-val="${(el.tot_rec).replace(".","")}">${el.tot_rec}</span>
+                        </td>
+                        <td class="ncs-text-center">
+                            <span class="btn-sub ncs-setup-ship" data-type="219" data-val="${(el.sub_pf).replace(".","")}">${el.sub_pf}</span> |
+                            <span class="btn-tot ncs-setup-ship" data-type="219" data-val="${(el.tot_pf).replace(".","")}">${el.tot_pf}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            table_plist += `
+                    </tbody>
+                </table>
+            `;
+
+
+            if( $(document).find("#ago_shortcuts").length>0 ) {
+                $(document).find("#ago_shortcuts").after(table_plist);
+            } else {
+                $(document).find("#allornone").append(table_plist);
+            }
+        }
+
+        $(document).on("click", ".ncs-setup-ship", function(e){
+            var _val = $(this).attr("data-val");
+            var _type = $(this).attr("data-type");
+            var coords = (($(this).parent().parent().find(".ncs-koords").text()).split("[")[1]).split("]")[0];
+            var selected = $(this).parent().parent().find(".ncs-koords .selected");
+
+            $(document).find(`li.technology > input`).val("");
+            $(document).find(`li.technology[data-technology=${_type}][data-status="on"] > input`).focus().val(_val);
+            $(document).find("#continueToFleet2").focus();
+
+            if( $(document).find("#ago_shortcuts").length>0 ) {
+                var selected_target = selected.hasClass("moon") ? "moon" : "name";
+                simulateMouseClick( $(document).find(`.ago_shortcuts_own a[rel="${coords}"] .ago_shortcuts_${selected_target}`) );
+            }
+        });
+
+        $(document).on("click", ".ncs-koords > span", function(e){
+            e.preventDefault();
+
+            $(this).parent().find("span").removeClass("selected");
+            $(this).addClass("selected");
+        });
+    /*Funcionalidad para almacenar la cantidad de naves necesarias en cada planeta*/
+
     /* Styles for config panel */
     $("html head").append(`
         <style>
@@ -291,7 +495,7 @@
             #ncsp_header {
                 height: 28px;
                 position: relative;
-                background: url("http://gf1.geo.gfsrv.net/cdn63/10e31cd5234445e4084558ea3506ea.gif") no-repeat scroll 0px 0px transparent;
+                background: url("https://gf1.geo.gfsrv.net/cdn63/10e31cd5234445e4084558ea3506ea.gif") no-repeat scroll 0px 0px transparent;
             }
             #ncsp_header h4 {
                 height: 28px;
@@ -309,14 +513,14 @@
                 display: block;
                 height: 16px;
                 width: 16px;
-                background: url("http://gf3.geo.gfsrv.net/cdne7/1f57d944fff38ee51d49c027f574ef.gif");
+                background: url("https://gf3.geo.gfsrv.net/cdne7/1f57d944fff38ee51d49c027f574ef.gif");
                 float: right;
                 margin: 8px 0 0 0;
                 opacity: 0.5;
             }
             #ncsp_main {
                 padding: 15px 25px 0 25px;
-                background: url("http://gf1.geo.gfsrv.net/cdn9e/4f73643e86a952be4aed7fdd61805a.gif") repeat-y scroll 5px 0px transparent;
+                background: url("https://gf1.geo.gfsrv.net/cdn9e/4f73643e86a952be4aed7fdd61805a.gif") repeat-y scroll 5px 0px transparent;
             }
             #ncsp_window.dinamic-jbwkz2099 table {
                 border: 1px solid #000;
@@ -366,7 +570,7 @@
             }
             #ncsp_footer {
                 height: 17px;
-                background: url("http://gf1.geo.gfsrv.net/cdn30/aa3e8edec0a2681915b3c9c6795e6f.gif") no-repeat scroll 2px 0px transparent;
+                background: url("https://gf1.geo.gfsrv.net/cdn30/aa3e8edec0a2681915b3c9c6795e6f.gif") no-repeat scroll 2px 0px transparent;
             }
 
             a.ncsp_menu_button {
@@ -411,7 +615,7 @@
     var extra_cargo_qty_tooltip = `Adicionar tiempo|<ol><li>Se calcularán los recursos generados en el lapso de tiempo establecido para sumar la cantidad de naves extra que se deben enviar.</li><li><b>Nota:</b> El tiempo establecido debe ser en minutos.</li></ol>`;
     var set_cargo_qty_tooltip = `Cantidad de naves|<ol><li>Los valores especificados en cada uno de los campos a continuación se adicionarán al total de naves; es decir, si se requieren 100 NCP y se especifican 50 en el campo correspondiente, el total de naves será ahora 150.</li><li><b>Nota:</b> El tiempo establecido se ignorará y únicamente se sumarán las cantidades de naves especificadas en los campos respectivos.</li></ol>`;
 
-    $("#middle .maincontent > #inhalt").after(`
+    $("#middle .maincontent").prepend(`
         <div id="ncsp_window" class="dinamic-jbwkz2099" style="display:none;">
             <div id="ncsp_header">
                 <h4>Naves necesarias para el transporte<span class="o_trade_calc_config_only"> » Configuración</span></h4>
@@ -541,5 +745,27 @@
         }
 
         return box_content;
+    }
+
+    function sortObjectByKeys(o) {
+        return Object.keys(o).sort().reduce((r, k) => (r[k] = o[k], r), {});
+    }
+
+    function simulateMouseClick (selector) {
+        function eventFire (el, etype) {
+            if (el.fireEvent)
+            {
+                el.fireEvent ('on' + etype);
+                el [etype] ();
+            }
+            else
+            {
+                var evObj = document.createEvent ('Events');
+                evObj.initEvent (etype, true, false);
+                el.dispatchEvent (evObj);
+            }
+        }
+        for (var i = 0; i < selector.length; i++)
+            eventFire (selector [i], "click");
     }
 })();

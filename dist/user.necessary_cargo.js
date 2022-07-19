@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Necessary cargo ships
 // @namespace    necessary_cargo
-// @version      1.3
+// @version      1.5
 // @description  Displays necessary cargo ships to move / transport the resources
 // @author       JBWKZ2099
 // @homepageURL  https://github.com/JBWKZ2099/ogame-necessary-cargo
@@ -35,6 +35,9 @@
 
         conf["time"] = "60";
         conf["fixed_qty_checkbox"] = false;
+        conf["fleet_per_planet"] = true;
+        conf["fleet_per_galaxy"] = true;
+        conf["full_fleet"] = true;
         conf["ncp_qty"] = "0";
         conf["ncg_qty"] = "0";
         conf["rec_qty"] = "0";
@@ -172,7 +175,7 @@
                 }
 
                 .tbl-necesary-cargo thead th { padding-top: 5px; padding-bottom: 10px; }
-                .tbl-necesary-cargo tbody > tr > td { padding-top: 2px; padding-bottom: 2px; }
+                .tbl-necesary-cargo tbody > tr > td { padding-top: 2px; padding-bottom: 2px; color: #848484; font-size: 10px !important; }
                 .tbl-necesary-cargo tbody > tr > td { border: 1px solid transparent; }
                 .tbl-necesary-cargo tbody > tr > td:first-child {
                     border-top-left-radius: 3px;
@@ -229,6 +232,13 @@
 
                 .ncs-koords span.planet.selected { background-position: 0 -19px; }
                 .ncs-koords span.moon.selected { background-position: -26px -19px; }
+                .ncs-clear-cont {
+                    position: relative;
+                    z-index: 100;
+                    width: calc( 100% - 40px );
+                    text-align: center;
+                    padding: 15px;
+                }
             `;
 
         if( player_class.hasClass("miner") )
@@ -310,12 +320,15 @@
     $(document).on("click", "#ncsp_btn_save", function(e){
         e.preventDefault();
 
-        var time = $(document).find("#ncsp_time_qty").val();
-        var fixed_qty_checkbox = $(document).find("#ncsp_checkbox_qty").prop("checked") ? true : false;
-        var ncp_qty = "0",
+        var time = $(document).find("#ncsp_time_qty").val(),
+            fixed_qty_checkbox = $(document).find("#ncsp_checkbox_qty").prop("checked") ? true : false,
+            ncp_qty = "0",
             ncg_qty = "0",
             rec_qty = "0",
-            pf_qty = "0";
+            pf_qty = "0",
+            fleet_per_planet = $(document).find("#fleet_per_planet").prop("checked") ? true : false,
+            fleet_per_galaxy = $(document).find("#fleet_per_galaxy").prop("checked") ? true : false,
+            full_fleet = $(document).find("#full_fleet").prop("checked") ? true : false;
 
         if( fixed_qty_checkbox ) {
             ncp_qty = $(`input[name="ncp_qty"]`).val();
@@ -332,6 +345,9 @@
         settings.ncg_qty = ncg_qty;
         settings.rec_qty = rec_qty;
         settings.pf_qty = pf_qty;
+        settings.fleet_per_planet = fleet_per_planet;
+        settings.fleet_per_galaxy = fleet_per_galaxy;
+        settings.full_fleet = full_fleet;
 
         new_settings["config"] = JSON.stringify(settings);
         localStorage.setItem(_localstorage_varname, JSON.stringify(new_settings));
@@ -348,10 +364,15 @@
 
     $(document).on("click", "#ncsp_close, #ncsp_btn_cancel", function(e){
         e.preventDefault();
+        var main_content_div = "#middle .maincontent > div";
+
+        if( theHref.indexOf("/game/index.php?page=ingame&component=fleetdispatch")>-1 ) {
+            main_content_div = `#middle .maincontent > div#fleet1`;
+        }
 
         if( $(document).find("#ncsp_window").is(":visible") ) {
             $(".maincontent").removeAttr("style");
-            $("#middle .maincontent > div").show();
+            $(main_content_div).show();
             $(".dinamic-jbwkz2099").hide();
             $(document).find("#ncsp_window").hide();
         }
@@ -399,63 +420,277 @@
             localStorage.setItem(_localstorage_varname, JSON.stringify(new_pl_sett));
         }
 
+        /*Se podrá borrar en la siguiente actualización del script*/
+        if( typeof current_settings.fleet_per_planet==="undefined" || typeof current_settings.fleet_per_galaxy==="undefined" || typeof current_settings.full_fleet==="undefined" ) {
+            var added_settings = {};
+            var new_sett = {};
+            added_settings = current_settings;
+
+            added_settings["fleet_per_planet"] = false;
+            added_settings["fleet_per_galaxy"] = false;
+            added_settings["full_fleet"] = false;
+
+            new_sett["config"] = JSON.stringify(added_settings);
+            localStorage.setItem(_localstorage_varname, JSON.stringify(new_sett));
+        }
+        /*Se podrá borrar en la siguiente actualización del script*/
+
         if( theHref.indexOf("/game/index.php?page=ingame&component=fleetdispatch")>-1 ) {
-            var plist = null;
-            var plist = JSON.parse( JSON.parse(localStorage.getItem(_localstorage_varname)).config ).planetList;
-            plist = sortObjectByKeys(plist);
+            if( current_settings.fleet_per_planet===true || current_settings.fleet_per_galaxy===true || current_settings.full_fleet===true ) {
+                var plist = null;
+                var plist = JSON.parse( JSON.parse(localStorage.getItem(_localstorage_varname)).config ).planetList;
+                plist = sortObjectByKeys(plist);
+                var count_sub_npc = 0,
+                    count_sub_ngc = 0,
+                    count_sub_rec = 0,
+                    count_sub_pf = 0,
+                    count_tot_npc = 0,
+                    count_tot_ngc = 0,
+                    count_tot_rec = 0,
+                    count_tot_pf = 0;
+                var galaxies = [];
 
-            var table_plist = `
-                <table class="tbl-necesary-cargo">
-                    <thead>
-                        <th class="ncs-text-center ncs-text-blue">Objetivos</th>
-                        <th class="ncs-text-center ncs-text-blue">NPC</th>
-                        <th class="ncs-text-center ncs-text-blue">NGC</th>
-                        <th class="ncs-text-center ncs-text-blue">REC</th>
-                        <th class="ncs-text-center ncs-text-blue">PF</th>
-                    </thead>
-                    <tbody>`;
+                var table_plist = `
+                    <table class="tbl-necesary-cargo" style="${(current_settings.fleet_per_planet ? "" : "display:none;" )}">
+                        <thead>
+                            <tr>
+                                <th colspan="5" class="ncs-text-center ncs-text-blue">NCS - Cantidad de flota por planeta</th>
+                            </tr>
+                            <tr>
+                                <th class="ncs-text-center ncs-text-blue">Objetivos</th>
+                                <th class="ncs-text-center ncs-text-blue tbl-th-npc">NPC <br> <span style="${(!settings.full_fleet ? "display:none;" : "")}">%count_sub_npc% |</span> %count_tot_npc%</th>
+                                <th class="ncs-text-center ncs-text-blue tbl-th-ngc">NGC <br> <span style="${(!settings.full_fleet ? "display:none;" : "")}">%count_sub_ngc% |</span> %count_tot_ngc%</th>
+                                <th class="ncs-text-center ncs-text-blue tbl-th-rec">REC <br> <span style="${(!settings.full_fleet ? "display:none;" : "")}">%count_sub_rec% |</span> %count_tot_rec%</th>
+                                <th class="ncs-text-center ncs-text-blue tbl-th-pf">PF <br> <span style="${(!settings.full_fleet ? "display:none;" : "")}">%count_sub_pf% |</span> %count_tot_pf%</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
 
-            $.each(plist, function(i, el) {
+                $.each(plist, function(i, el) {
+                    var galaxy = (i.split("[")[1]).split(":")[0];
+                    galaxies.push(galaxy);
+
+                    table_plist += `
+                        <tr class="${( i==planetKoords || i==_moonKoords ? "current" : "" )}"">
+                            <td class="ncs-text-center ncs-koords" valign="middle">
+                                ${i}
+
+                                <span class="planet"></span>
+                                <span class="moon selected"></span>
+                            </td>
+                            <td class="ncs-text-center">
+                                <span style="${(!settings.full_fleet ? "display:none;" : "")}">
+                                    <span class="btn-sub ncs-setup-ship" data-galaxy="${galaxy}" data-cargo-type="sub" data-type="202" data-val="${(el.sub_ncp).replace(".","")}">${el.sub_ncp}</span> |
+                                </span>
+                                <span class="btn-tot ncs-setup-ship" data-galaxy="${galaxy}" data-cargo-type="tot" data-type="202" data-val="${(el.tot_ncp).replace(".","")}">${el.tot_ncp}</span>
+                            </td>
+                            <td class="ncs-text-center">
+                                <span style="${(!settings.full_fleet ? "display:none;" : "")}">
+                                    <span class="btn-sub ncs-setup-ship" data-galaxy="${galaxy}" data-cargo-type="sub" data-type="203" data-val="${(el.sub_ncg).replace(".","")}">${el.sub_ncg}</span> |
+                                </span>
+                                <span class="btn-tot ncs-setup-ship" data-galaxy="${galaxy}" data-cargo-type="tot" data-type="203" data-val="${(el.tot_ncg).replace(".","")}">${el.tot_ncg}</span>
+                            </td>
+                            <td class="ncs-text-center">
+                                <span style="${(!settings.full_fleet ? "display:none;" : "")}">
+                                    <span class="btn-sub ncs-setup-ship" data-galaxy="${galaxy}" data-cargo-type="sub" data-type="209" data-val="${(el.sub_rec).replace(".","")}">${el.sub_rec}</span> |
+                                </span>
+                                <span class="btn-tot ncs-setup-ship" data-galaxy="${galaxy}" data-cargo-type="tot" data-type="209" data-val="${(el.tot_rec).replace(".","")}">${el.tot_rec}</span>
+                            </td>
+                            <td class="ncs-text-center">
+                                <span style="${(!settings.full_fleet ? "display:none;" : "")}">
+                                    <span class="btn-sub ncs-setup-ship" data-galaxy="${galaxy}" data-cargo-type="sub" data-type="219" data-val="${(el.sub_pf).replace(".","")}">${el.sub_pf}</span> |
+                                </span>
+                                <span class="btn-tot ncs-setup-ship" data-galaxy="${galaxy}" data-cargo-type="tot" data-type="219" data-val="${(el.tot_pf).replace(".","")}">${el.tot_pf}</span>
+                            </td>
+                        </tr>
+                    `;
+
+                    count_sub_npc += parseInt(el.sub_ncp);
+                    count_sub_ngc += parseInt(el.sub_ncg);
+                    count_sub_rec += parseInt(el.sub_rec);
+                    count_sub_pf += parseInt(el.sub_pf);
+
+                    count_tot_npc += parseInt(el.tot_ncp);
+                    count_tot_ngc += parseInt(el.tot_ncg);
+                    count_tot_rec += parseInt(el.tot_rec);
+                    count_tot_pf += parseInt(el.tot_pf);
+                });
+
                 table_plist += `
-                    <tr class="${( i==planetKoords || i==_moonKoords ? "current" : "" )}"">
-                        <td class="ncs-text-center ncs-koords" valign="middle">
-                            ${i}
+                        </tbody>
+                    </table>
 
-                            <span class="planet"></span>
-                            <span class="moon selected"></span>
-                        </td>
-                        <td class="ncs-text-center">
-                            <span class="btn-sub ncs-setup-ship" data-type="202" data-val="${(el.sub_ncp).replace(".","")}">${el.sub_ncp}</span> |
-                            <span class="btn-tot ncs-setup-ship" data-type="202" data-val="${(el.tot_ncp).replace(".","")}">${el.tot_ncp}</span>
-                        </td>
-                        <td class="ncs-text-center">
-                            <span class="btn-sub ncs-setup-ship" data-type="203" data-val="${(el.sub_ncg).replace(".","")}">${el.sub_ncg}</span> |
-                            <span class="btn-tot ncs-setup-ship" data-type="203" data-val="${(el.tot_ncg).replace(".","")}">${el.tot_ncg}</span>
-                        </td>
-                        <td class="ncs-text-center">
-                            <span class="btn-sub ncs-setup-ship" data-type="209" data-val="${(el.sub_rec).replace(".","")}">${el.sub_rec}</span> |
-                            <span class="btn-tot ncs-setup-ship" data-type="209" data-val="${(el.tot_rec).replace(".","")}">${el.tot_rec}</span>
-                        </td>
-                        <td class="ncs-text-center">
-                            <span class="btn-sub ncs-setup-ship" data-type="219" data-val="${(el.sub_pf).replace(".","")}">${el.sub_pf}</span> |
-                            <span class="btn-tot ncs-setup-ship" data-type="219" data-val="${(el.tot_pf).replace(".","")}">${el.tot_pf}</span>
-                        </td>
-                    </tr>
+                    <div class="ncs-clear-cont">
+                        <a id="ncsp-clear-tbl-data" href="#">Eliminar datos</a>
+                    </div>
                 `;
-            });
 
-            table_plist += `
-                    </tbody>
-                </table>
-            `;
+                table_plist = table_plist.replace("%count_sub_npc%", count_sub_npc);
+                table_plist = table_plist.replace("%count_sub_ngc%", count_sub_ngc);
+                table_plist = table_plist.replace("%count_sub_rec%", count_sub_rec);
+                table_plist = table_plist.replace("%count_sub_pf%", count_sub_pf);
+                table_plist = table_plist.replace("%count_tot_npc%", count_tot_npc);
+                table_plist = table_plist.replace("%count_tot_ngc%", count_tot_ngc);
+                table_plist = table_plist.replace("%count_tot_rec%", count_tot_rec);
+                table_plist = table_plist.replace("%count_tot_pf%", count_tot_pf);
+
+                var new_galaxies = galaxies.filter(function(element,index,self){
+                    return index === self.indexOf(element);
+                });
+
+                if( $(document).find("#ago_shortcuts").length>0 ) {
+                    $(document).find("#ago_shortcuts").after(table_plist);
+                } else {
+                    $(document).find("#allornone").append(table_plist);
+                }
+
+                /*Conteo de naves por galaxia*/
+                    var ships = {};
+                    var ship_count_html = "";
+
+                    $.each(new_galaxies, function(i, e){
+                        var g = parseInt(e);
+                        ships[`G${g}`] = {};
+                        ships[`G${g}`]["sub_npc"] = 0;
+                        ships[`G${g}`]["sub_ngc"] = 0;
+                        ships[`G${g}`]["sub_rec"] = 0;
+                        ships[`G${g}`]["sub_pf"] = 0;
+                        ships[`G${g}`]["tot_npc"] = 0;
+                        ships[`G${g}`]["tot_ngc"] = 0;
+                        ships[`G${g}`]["tot_rec"] = 0;
+                        ships[`G${g}`]["tot_pf"] = 0;
+                    });
+
+                    $.each(new_galaxies, function(i, e){
+                        var g = parseInt(e);
+
+                        $(".tbl-necesary-cargo").find(`[data-galaxy="${g}"][data-cargo-type="sub"][data-type="202"]`).each(function(i2, e2){
+                            ships[`G${g}`]["sub_npc"] += parseInt($(e2).attr("data-val"));
+                        });
+
+                        $(".tbl-necesary-cargo").find(`[data-galaxy="${g}"][data-cargo-type="sub"][data-type="203"]`).each(function(i2, e2){
+                            ships[`G${g}`]["sub_ngc"] += parseInt($(e2).attr("data-val"));
+                        });
+
+                        $(".tbl-necesary-cargo").find(`[data-galaxy="${g}"][data-cargo-type="sub"][data-type="209"]`).each(function(i2, e2){
+                            ships[`G${g}`]["sub_rec"] += parseInt($(e2).attr("data-val"));
+                        });
+
+                        $(".tbl-necesary-cargo").find(`[data-galaxy="${g}"][data-cargo-type="sub"][data-type="219"]`).each(function(i2, e2){
+                            ships[`G${g}`]["sub_pf"] += parseInt($(e2).attr("data-val"));
+                        });
 
 
-            if( $(document).find("#ago_shortcuts").length>0 ) {
-                $(document).find("#ago_shortcuts").after(table_plist);
-            } else {
-                $(document).find("#allornone").append(table_plist);
+
+                        $(".tbl-necesary-cargo").find(`[data-galaxy="${g}"][data-cargo-type="tot"][data-type="202"]`).each(function(i2, e2){
+                            ships[`G${g}`]["tot_npc"] += parseInt($(e2).attr("data-val"));
+                        });
+
+                        $(".tbl-necesary-cargo").find(`[data-galaxy="${g}"][data-cargo-type="tot"][data-type="203"]`).each(function(i2, e2){
+                            ships[`G${g}`]["tot_ngc"] += parseInt($(e2).attr("data-val"));
+                        });
+
+                        $(".tbl-necesary-cargo").find(`[data-galaxy="${g}"][data-cargo-type="tot"][data-type="209"]`).each(function(i2, e2){
+                            ships[`G${g}`]["tot_rec"] += parseInt($(e2).attr("data-val"));
+                        });
+
+                        $(".tbl-necesary-cargo").find(`[data-galaxy="${g}"][data-cargo-type="tot"][data-type="219"]`).each(function(i2, e2){
+                            ships[`G${g}`]["tot_pf"] += parseInt($(e2).attr("data-val"));
+                        });
+                    });
+
+                    ship_count_html += `
+                        <table class="tbl-necesary-cargo" style="${(current_settings.fleet_per_galaxy ? "" : "display:none;" )}">
+                            <thead>
+                                <th colspan="5" class="ncs-text-center ncs-text-blue">NCS - Cantidad de flota por Galaxia</th>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th class="ncs-text-center ncs-text-blue">Galaxia</th>
+                                    <th class="ncs-text-center ncs-text-blue">NPC</th>
+                                    <th class="ncs-text-center ncs-text-blue">NGC</th>
+                                    <th class="ncs-text-center ncs-text-blue">REC</th>
+                                    <th class="ncs-text-center ncs-text-blue">PF</th>
+                                </tr>`;
+
+                    $.each(ships, function(i, e){
+                        ship_count_html += `
+                                <tr>
+                                    <td class="ncs-text-center">${i}</td>`;
+
+                        ship_count_html += `
+                                    <td class="ncs-text-center">
+                                        <span style="${(!settings.full_fleet ? "display:none;" : "")}">
+                                            ${e.sub_npc} |
+                                        </span>
+                                        ${e.tot_npc}
+                                    </td>
+                                    <td class="ncs-text-center">
+                                        <span style="${(!settings.full_fleet ? "display:none;" : "")}">
+                                            ${e.sub_ngc} |
+                                        </span>
+                                        ${e.tot_ngc}
+                                    </td>
+                                    <td class="ncs-text-center">
+                                        <span style="${(!settings.full_fleet ? "display:none;" : "")}">
+                                            ${e.sub_rec} |
+                                        </span>
+                                        ${e.tot_rec}
+                                    </td>
+                                    <td class="ncs-text-center">
+                                        <span style="${(!settings.full_fleet ? "display:none;" : "")}">
+                                            ${e.sub_pf} |
+                                        </span>
+                                        ${e.tot_pf}
+                                    </td>`;
+
+                        ship_count_html += `
+                                </tr>
+                        `;
+                    });
+
+                    ship_count_html += `
+                            </tbody>
+                        <table>
+                    `;
+                /*Conteo de naves por galaxia*/
+
+                if( ship_count_html.length>0 ) {
+                    $(document).find(".tbl-necesary-cargo").after(ship_count_html);
+                }
             }
         }
+
+        $(document).on("click", "#ncsp-clear-tbl-data", function(e){
+            e.preventDefault();
+
+            var current_settings = JSON.parse( JSON.parse(localStorage.getItem(_localstorage_varname)).config );
+            var plist = {};
+            var new_sett = {};
+
+            current_settings["planetList"] = {};
+            new_sett["config"] = JSON.stringify(current_settings);
+            localStorage.setItem(_localstorage_varname, JSON.stringify(new_sett));
+
+            $(document).find(".tbl-necesary-cargo thead").find(".tbl-th-npc").empty().append(`
+                <th class="ncs-text-center ncs-text-blue tbl-th-npc">NPC <br> - | -</th>
+            `);
+            $(document).find(".tbl-necesary-cargo thead").find(".tbl-th-ngc").empty().append(`
+                <th class="ncs-text-center ncs-text-blue tbl-th-ngc">NGC <br> - | -</th>
+            `);
+            $(document).find(".tbl-necesary-cargo thead").find(".tbl-th-rec").empty().append(`
+                <th class="ncs-text-center ncs-text-blue tbl-th-rec">REC <br> - | -</th>
+            `);
+            $(document).find(".tbl-necesary-cargo thead").find(".tbl-th-pf").empty().append(`
+                <th class="ncs-text-center ncs-text-blue tbl-th-pf">PF <br> - | -</th>
+            `);
+
+            $(document).find(".tbl-necesary-cargo tbody").empty().append(`
+                <tr>
+                    <td colspan="5" style="text-align:center">No available data</td>
+                </tr>
+            `);
+        });
 
         $(document).on("click", ".ncs-setup-ship", function(e){
             var _val = $(this).attr("data-val");
@@ -463,7 +698,7 @@
             var coords = (($(this).parent().parent().find(".ncs-koords").text()).split("[")[1]).split("]")[0];
             var selected = $(this).parent().parent().find(".ncs-koords .selected");
 
-            $(document).find(`li.technology > input`).val("");
+            $(document).find(`li.technology > input`).val("").keyup();
             $(document).find(`li.technology[data-technology=${_type}][data-status="on"] > input`).focus().val(_val);
             $(document).find("#continueToFleet2").focus();
 
@@ -612,8 +847,11 @@
     `);
 
     /* HTML for config panel */
-    var extra_cargo_qty_tooltip = `Adicionar tiempo|<ol><li>Se calcularán los recursos generados en el lapso de tiempo establecido para sumar la cantidad de naves extra que se deben enviar.</li><li><b>Nota:</b> El tiempo establecido debe ser en minutos.</li></ol>`;
-    var set_cargo_qty_tooltip = `Cantidad de naves|<ol><li>Los valores especificados en cada uno de los campos a continuación se adicionarán al total de naves; es decir, si se requieren 100 NCP y se especifican 50 en el campo correspondiente, el total de naves será ahora 150.</li><li><b>Nota:</b> El tiempo establecido se ignorará y únicamente se sumarán las cantidades de naves especificadas en los campos respectivos.</li></ol>`;
+    var extra_cargo_qty_tooltip = `Adicionar tiempo|<ol><li>Se calcularán los recursos generados en el lapso de tiempo establecido para sumar la cantidad de naves extra que se deben enviar.</li><li><b>Nota:</b> El tiempo establecido debe ser en minutos. <br> <b>Es importante tener en cuenta que si se actualiza este dato, se deberán recorrer nuevamente los planetas para ajustar las cantidades en la tabla de la pantalla de flota.</b></li></ol>`,
+        set_cargo_qty_tooltip = `Cantidad de naves|<ol><li>Los valores especificados en cada uno de los campos a continuación se adicionarán al total de naves; es decir, si se requieren 100 NCP y se especifican 50 en el campo correspondiente, el total de naves será ahora 150.</li><li><b>Nota:</b> El tiempo establecido se ignorará y únicamente se sumarán las cantidades de naves especificadas en los campos respectivos. <br> <b>Es importante tener en cuenta que si se actualiza este dato, se deberán recorrer nuevamente los planetas para ajustar las cantidades en la tabla de la pantalla de flota.</b></li></ol>`,
+        fleet_per_planet_tooltip = `Flota por planeta|<ol><li>Se mostrará la cantidad de flota necesaria para transportar los recursos en una tabla en la pantalla de Flota.</li></ol>`,
+        fleet_per_galaxy_tooltip = `Flota por galaxia|<ol><li>Se mostrará la cantidad de flota necesaria para transportar los recursos en una tabla en la pantalla de Flota. Este dato calcula la flota necesaria por galaxia para realizar el salto de las naves (Ejemplo: Si se tienen 5 planetas en G1 y la flota principal se encuentra en G3, se calculan las naves necesarias para transportar todos los recursos de G1 y realizar el salto de las naves necesarias que se encuentran en G3).</li></ol>`,
+        full_fleet_tooltip = `Flota completa|<ol><li>Se mostrará la cantidad de flota con y sin las naves adicionales para los recursos generados en cierto tiempo (este dato se configura en el campo 'Adicionar Tiempo').</li></ol>`;
 
     $("#middle .maincontent").prepend(`
         <div id="ncsp_window" class="dinamic-jbwkz2099" style="display:none;">
@@ -683,6 +921,36 @@
                                 </td>
                                 <td class="ncsp_input">
                                     <input name="pf_qty" type="text" value="${settings.pf_qty}">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ncsp_label">
+                                    <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${fleet_per_planet_tooltip}">
+                                        Mostrar flota por planeta
+                                    </span>
+                                </td>
+                                <td class="ncsp_checkbox">
+                                    <input id="fleet_per_planet" name="fleet_per_planet" type="checkbox" ${settings.fleet_per_planet ? "checked" : ""}>
+                                </td>
+                            </tr>
+                            <tr class="alt">
+                                <td class="ncsp_label">
+                                    <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${fleet_per_galaxy_tooltip}">
+                                        Mostrar flota por galaxia
+                                    </span>
+                                </td>
+                                <td class="ncsp_checkbox">
+                                    <input id="fleet_per_galaxy" name="fleet_per_galaxy" type="checkbox" ${settings.fleet_per_galaxy ? "checked" : ""}>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ncsp_label">
+                                    <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${full_fleet_tooltip}">
+                                        Mostrar flota completa
+                                    </span>
+                                </td>
+                                <td class="ncsp_checkbox">
+                                    <input id="full_fleet" name="full_fleet" type="checkbox" ${settings.full_fleet ? "checked" : ""}>
                                 </td>
                             </tr>
                         </tbody>

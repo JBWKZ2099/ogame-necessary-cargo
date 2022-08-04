@@ -38,6 +38,7 @@
         conf["fleet_per_planet"] = true;
         conf["fleet_per_galaxy"] = true;
         conf["full_fleet"] = true;
+        conf["ship_cargo"] = false;
         conf["ncp_qty"] = "0";
         conf["ncg_qty"] = "0";
         conf["rec_qty"] = "0";
@@ -110,19 +111,41 @@
             deuterium_hour = resources_hour["deuterium"][0] + resources_hour["deuterium"][2],
             researches = JSON.parse( localStorage.UV_playerResearch ),
             hyperspace = researches[114],
+            fighterLight_base = 50,
+            fighterHeavy_base = 100,
+            cruiser_base = 800,
+            battleship_base = 1500,
+            interceptor_base = 750,
+            bomber_base = 500,
+            destroyer_base = 2000,
+            deathstar_base = 1000000,
+            reaper_base = 10000,
+            pf_base = 10000,
             ncp_base = 5000,
             ncg_base = 25000,
+            colonyShip_base = 7500,
             rec_base = 20000,
-            pf_base = 10000,
+            espionageProbe_base = 0,
+            fighterLight = 0,
+            fighterHeavy = 0,
+            cruiser = 0,
+            battleship = 0,
+            interceptor = 0,
+            bomber = 0,
+            destroyer = 0,
+            deathstar = 0,
+            reaper = 0,
+            pf = 0,
             ncp = 0,
             ncg = 0,
+            colonyShip = 0,
             rec = 0,
-            pf = 0,
-            player_class = $("#characterclass div.characterclass"),
-            bonus_research = (hyperspace*5)/100,
+            espionageProbe = 0,
             bonus_class_rec = 0,
             bonus_class_pf = 0,
             bonus_class = 0,
+            player_class = $("#characterclass div.characterclass"),
+            bonus_research = (hyperspace*5)/100,
             allres = metal+crystal+deuterium,
             allres_hour = metal_hour+crystal_hour+deuterium_hour,
             css = `
@@ -239,6 +262,17 @@
                     text-align: center;
                     padding: 15px;
                 }
+
+                .ncs-speed {
+                    position: absolute;
+                    bottom: 15px;
+                    font-size: 10px;
+                    background: rgba(0,0,0,0.65);
+                    right: 0;
+                    left: unset;
+                    padding: 1px 3px;
+                    pointer-events: none;
+                }
             `;
 
         if( player_class.hasClass("miner") )
@@ -247,12 +281,25 @@
         if( player_class.hasClass("warrior") ) {
             bonus_class_pf = 0.20;
             bonus_class_pf = pf_base*bonus_class_pf;
+            bonus_class_rec = pf_base*bonus_class_rec;
         }
 
         ncp = (ncp_base*bonus_class + ncp_base*bonus_research) + ncp_base;
         ncg = (ncg_base*bonus_class + ncg_base*bonus_research) + ncg_base;
         rec = (bonus_class_rec + rec_base*bonus_research) + rec_base;
         pf = (bonus_class_pf + pf_base*bonus_research) + pf_base;
+
+        fighterLight = (fighterLight_base*bonus_research) + fighterLight_base;
+        fighterHeavy = (fighterHeavy_base*bonus_research) + fighterHeavy_base;
+        cruiser = (cruiser_base*bonus_research) + cruiser_base;
+        battleship = (battleship_base*bonus_research) + battleship_base;
+        interceptor = (interceptor_base*bonus_research) + interceptor_base;
+        bomber = (bomber_base*bonus_research) + bomber_base;
+        destroyer = (destroyer_base*bonus_research) + destroyer_base;
+        deathstar = (deathstar_base*bonus_research) + deathstar_base;
+        reaper = (reaper_base*bonus_research) + reaper_base;
+        colonyShip = (colonyShip_base*bonus_research) + colonyShip_base;
+        espionageProbe = (espionageProbe_base*bonus_research) + espionageProbe_base;
 
         /* If fixed qty is setted, then resources produced in an hour will not be considered, just the current production */
         if( settings.fixed_qty_checkbox )
@@ -328,7 +375,8 @@
             pf_qty = "0",
             fleet_per_planet = $(document).find("#fleet_per_planet").prop("checked") ? true : false,
             fleet_per_galaxy = $(document).find("#fleet_per_galaxy").prop("checked") ? true : false,
-            full_fleet = $(document).find("#full_fleet").prop("checked") ? true : false;
+            full_fleet = $(document).find("#full_fleet").prop("checked") ? true : false,
+            ship_cargo = $(document).find("#ship_cargo").prop("checked") ? true : false;
 
         if( fixed_qty_checkbox ) {
             ncp_qty = $(`input[name="ncp_qty"]`).val();
@@ -348,6 +396,7 @@
         settings.fleet_per_planet = fleet_per_planet;
         settings.fleet_per_galaxy = fleet_per_galaxy;
         settings.full_fleet = full_fleet;
+        settings.ship_cargo = ship_cargo;
 
         new_settings["config"] = JSON.stringify(settings);
         localStorage.setItem(_localstorage_varname, JSON.stringify(new_settings));
@@ -421,14 +470,13 @@
         }
 
         /*Se podrá borrar en la siguiente actualización del script*/
-        if( typeof current_settings.fleet_per_planet==="undefined" || typeof current_settings.fleet_per_galaxy==="undefined" || typeof current_settings.full_fleet==="undefined" ) {
+        if( typeof current_settings.ship_cargo==="undefined" ) {
+            /* JSON.parse( JSON.parse(localStorage.__LS_s130_mx_necessaryCargo).config ) */
             var added_settings = {};
             var new_sett = {};
             added_settings = current_settings;
 
-            added_settings["fleet_per_planet"] = false;
-            added_settings["fleet_per_galaxy"] = false;
-            added_settings["full_fleet"] = false;
+            added_settings["ship_cargo"] = false;
 
             new_sett["config"] = JSON.stringify(added_settings);
             localStorage.setItem(_localstorage_varname, JSON.stringify(new_sett));
@@ -521,7 +569,7 @@
                     count_tot_rec += parseInt( (el.tot_rec).replace(".", "") );
                     count_tot_pf += parseInt( (el.tot_pf).replace(".", "") );
 
-                    console.log( (el.tot_ncp).replace(".", "") );
+                    // console.log( (el.tot_ncp).replace(".", "") );
 
                 });
 
@@ -676,6 +724,54 @@
                 if( ship_count_html.length>0 ) {
                     $(document).find(".tbl-necesary-cargo").after(ship_count_html);
                 }
+            }
+
+            if( current_settings.ship_cargo===true ) {
+                $(`#technologies ul li[data-technology="204"] > span.sprite`).append(`
+                    <span class="ncs-speed">${addDots(fighterLight)}</span>
+                `);
+                $(`#technologies ul li[data-technology="205"] > span.sprite`).append(`
+                    <span class="ncs-speed">${addDots(fighterHeavy)}</span>
+                `);
+                $(`#technologies ul li[data-technology="206"] > span.sprite`).append(`
+                    <span class="ncs-speed">${addDots(cruiser)}</span>
+                `);
+                $(`#technologies ul li[data-technology="207"] > span.sprite`).append(`
+                    <span class="ncs-speed">${addDots(battleship)}</span>
+                `);
+                $(`#technologies ul li[data-technology="215"] > span.sprite`).append(`
+                    <span class="ncs-speed">${addDots(interceptor)}</span>
+                `);
+                $(`#technologies ul li[data-technology="211"] > span.sprite`).append(`
+                    <span class="ncs-speed">${addDots(bomber)}</span>
+                `);
+                $(`#technologies ul li[data-technology="213"] > span.sprite`).append(`
+                    <span class="ncs-speed">${addDots(destroyer)}</span>
+                `);
+                $(`#technologies ul li[data-technology="214"] > span.sprite`).append(`
+                    <span class="ncs-speed">${addDots(deathstar)}</span>
+                `);
+                $(`#technologies ul li[data-technology="218"] > span.sprite`).append(`
+                    <span class="ncs-speed">${addDots(reaper)}</span>
+                `);
+                $(`#technologies ul li[data-technology="219"] > span.sprite`).append(`
+                    <span class="ncs-speed">${addDots(pf)}</span>
+                `);
+                $(`#technologies ul li[data-technology="202"] > span.sprite`).append(`
+                    <span class="ncs-speed">${addDots(ncp)}</span>
+                `);
+                $(`#technologies ul li[data-technology="203"] > span.sprite`).append(`
+                    <span class="ncs-speed">${addDots(ncg)}</span>
+                `);
+                $(`#technologies ul li[data-technology="208"] > span.sprite`).append(`
+                    <span class="ncs-speed">${addDots(colonyShip)}</span>
+                `);
+                $(`#technologies ul li[data-technology="209"] > span.sprite`).append(`
+                    <span class="ncs-speed">${addDots(rec)}</span>
+                `);
+                $(`#technologies ul li[data-technology="210"] > span.sprite`).append(`
+                    <span class="ncs-speed">${addDots(espionageProbe)}</span>
+                `);
             }
         }
 
@@ -908,7 +1004,9 @@
         set_cargo_qty_tooltip = `Cantidad de naves|<ol><li>Los valores especificados en cada uno de los campos a continuación se adicionarán al total de naves; es decir, si se requieren 100 NCP y se especifican 50 en el campo correspondiente, el total de naves será ahora 150.</li><li><b>Nota:</b> El tiempo establecido se ignorará y únicamente se sumarán las cantidades de naves especificadas en los campos respectivos. <br> <b>Es importante tener en cuenta que si se actualiza este dato, se deberán recorrer nuevamente los planetas para ajustar las cantidades en la tabla de la pantalla de flota.</b></li></ol>`,
         fleet_per_planet_tooltip = `Flota por planeta|<ol><li>Se mostrará la cantidad de flota necesaria para transportar los recursos en una tabla en la pantalla de Flota.</li></ol>`,
         fleet_per_galaxy_tooltip = `Flota por galaxia|<ol><li>Se mostrará la cantidad de flota necesaria para transportar los recursos en una tabla en la pantalla de Flota. Este dato calcula la flota necesaria por galaxia para realizar el salto de las naves (Ejemplo: Si se tienen 5 planetas en G1 y la flota principal se encuentra en G3, se calculan las naves necesarias para transportar todos los recursos de G1 y realizar el salto de las naves necesarias que se encuentran en G3).</li></ol>`,
-        full_fleet_tooltip = `Flota completa|<ol><li>Se mostrará la cantidad de flota con y sin las naves adicionales para los recursos generados en cierto tiempo (este dato se configura en el campo 'Adicionar Tiempo').</li></ol>`;
+        full_fleet_tooltip = `Flota completa|<ol><li>Se mostrará la cantidad de flota con y sin las naves adicionales para los recursos generados en cierto tiempo (este dato se configura en el campo 'Adicionar Tiempo').</li></ol>`,
+        ship_cargo_tooltip = `Velocidad de naves|<ol><li>Se mostrará la velocidad de las naves en la vista Flota.</li></ol>`;
+
 
     $("#middle .maincontent").prepend(`
         <div id="ncsp_window" class="dinamic-jbwkz2099" style="display:none;">
@@ -1008,6 +1106,16 @@
                                 </td>
                                 <td class="ncsp_checkbox">
                                     <input id="full_fleet" name="full_fleet" type="checkbox" ${settings.full_fleet ? "checked" : ""}>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ncsp_label">
+                                    <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${ship_cargo_tooltip}">
+                                        Mostrar velocidad de las naves
+                                    </span>
+                                </td>
+                                <td class="ncsp_checkbox">
+                                    <input id="ship_cargo" name="ship_cargo" type="checkbox" ${settings.ship_cargo_tooltip ? "checked" : ""}>
                                 </td>
                             </tr>
                         </tbody>

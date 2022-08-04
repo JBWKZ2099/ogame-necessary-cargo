@@ -451,6 +451,12 @@
                 var galaxies = [];
 
                 var table_plist = `
+                    <div class="ncs-text-center" style="margin-top:15px;">
+                        <a href="#" class="btn_blue" id="set-expedition-config" style="color:#FFF !important;">
+                            Flotas para Expedición
+                        </a>
+                    </div>
+
                     <table class="tbl-necesary-cargo" style="${(current_settings.fleet_per_planet ? "" : "display:none;" )}">
                         <thead>
                             <tr>
@@ -505,16 +511,28 @@
                         </tr>
                     `;
 
-                    count_sub_npc += parseInt(el.sub_ncp);
-                    count_sub_ngc += parseInt(el.sub_ncg);
-                    count_sub_rec += parseInt(el.sub_rec);
-                    count_sub_pf += parseInt(el.sub_pf);
+                    count_sub_npc += parseInt( (el.sub_ncp).replace(".", "") );
+                    count_sub_ngc += parseInt( (el.sub_ncg).replace(".", "") );
+                    count_sub_rec += parseInt( (el.sub_rec).replace(".", "") );
+                    count_sub_pf += parseInt( (el.sub_pf).replace(".", "") );
 
-                    count_tot_npc += parseInt(el.tot_ncp);
-                    count_tot_ngc += parseInt(el.tot_ncg);
-                    count_tot_rec += parseInt(el.tot_rec);
-                    count_tot_pf += parseInt(el.tot_pf);
+                    count_tot_npc += parseInt( (el.tot_ncp).replace(".", "") );
+                    count_tot_ngc += parseInt( (el.tot_ncg).replace(".", "") );
+                    count_tot_rec += parseInt( (el.tot_rec).replace(".", "") );
+                    count_tot_pf += parseInt( (el.tot_pf).replace(".", "") );
+
+                    console.log( (el.tot_ncp).replace(".", "") );
+
                 });
+
+                // console.log( count_sub_npc );
+                // console.log( count_sub_ngc );
+                // console.log( count_sub_rec );
+                // console.log( count_sub_pf );
+                // console.log( count_tot_npc );
+                // console.log( count_tot_ngc );
+                // console.log( count_tot_rec );
+                // console.log( count_tot_pf );
 
                 table_plist += `
                         </tbody>
@@ -660,6 +678,45 @@
                 }
             }
         }
+
+        $(document).on("click", "#set-expedition-config", function(e){
+            $("#position").val(16).keyup();
+            simulateMouseClick( $("#missionButton15") );
+
+            $(document).find(`li.technology > input`).val("").keyup();
+
+            /*
+                204 => Lig
+                205 => Pes
+                206 => Cru
+                207 => Nb
+                215 => Bb
+                211 => Des
+                213 => Aco
+                218 => RR
+                219 => PF
+            */
+            $(document).find(`li.technology[data-technology=204][data-status="on"] > input`).focus().val(10);
+            $(document).find(`li.technology[data-technology=205][data-status="on"] > input`).focus().val(10);
+            $(document).find(`li.technology[data-technology=206][data-status="on"] > input`).focus().val(1);
+            $(document).find(`li.technology[data-technology=207][data-status="on"] > input`).focus().val(1);
+            $(document).find(`li.technology[data-technology=215][data-status="on"] > input`).focus().val(1);
+            $(document).find(`li.technology[data-technology=211][data-status="on"] > input`).focus().val(1);
+            $(document).find(`li.technology[data-technology=213][data-status="on"] > input`).focus().val(1);
+            $(document).find(`li.technology[data-technology=218][data-status="on"] > input`).focus().val(1);
+            $(document).find(`li.technology[data-technology=219][data-status="on"] > input`).focus().val(1);
+
+            /*
+                202 => NPC
+                203 => NGC
+                210 => Son
+            */
+            $(document).find(`li.technology[data-technology=202][data-status="on"] > input`).focus().val(200);
+            $(document).find(`li.technology[data-technology=203][data-status="on"] > input`).focus().val(200);
+            $(document).find(`li.technology[data-technology=210][data-status="on"] > input`).focus().val(100);
+
+            $(document).find("#continueToFleet2").focus();
+        });
 
         $(document).on("click", "#ncsp-clear-tbl-data", function(e){
             e.preventDefault();

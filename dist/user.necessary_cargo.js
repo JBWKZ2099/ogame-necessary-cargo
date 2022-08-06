@@ -23,6 +23,7 @@
     var _localstorage_varname = `__LS_${uni}_${lang}_necessaryCargo`;
     // localStorage.removeItem(_localstorage_varname);
     var _LS_val = {};
+    var ogame_version = parseVersion( $(`meta[name="ogame-version"]`).attr("content") );
 
     var settings = null;
 
@@ -274,6 +275,14 @@
                     pointer-events: none;
                 }
             `;
+
+        if( ogame_version[0]>8 ) {
+            css += `
+                .necesary-cargo {
+                    top: 0 !important;
+                }
+            `;
+        }
 
         if( player_class.hasClass("miner") )
             bonus_class = 0.25;
@@ -1005,7 +1014,7 @@
         fleet_per_planet_tooltip = `Flota por planeta|<ol><li>Se mostrará la cantidad de flota necesaria para transportar los recursos en una tabla en la pantalla de Flota.</li></ol>`,
         fleet_per_galaxy_tooltip = `Flota por galaxia|<ol><li>Se mostrará la cantidad de flota necesaria para transportar los recursos en una tabla en la pantalla de Flota. Este dato calcula la flota necesaria por galaxia para realizar el salto de las naves (Ejemplo: Si se tienen 5 planetas en G1 y la flota principal se encuentra en G3, se calculan las naves necesarias para transportar todos los recursos de G1 y realizar el salto de las naves necesarias que se encuentran en G3).</li></ol>`,
         full_fleet_tooltip = `Flota completa|<ol><li>Se mostrará la cantidad de flota con y sin las naves adicionales para los recursos generados en cierto tiempo (este dato se configura en el campo 'Adicionar Tiempo').</li></ol>`,
-        ship_cargo_tooltip = `Velocidad de naves|<ol><li>Se mostrará la velocidad de las naves en la vista Flota.</li></ol>`;
+        ship_cargo_tooltip = `Capacidad de naves|<ol><li>Se mostrará la capacidad de carga de las naves en la vista Flota.</li></ol>`;
 
 
     $("#middle .maincontent").prepend(`
@@ -1200,5 +1209,12 @@
         }
         for (var i = 0; i < selector.length; i++)
             eventFire (selector [i], "click");
+    }
+
+    function parseVersion(version) {
+        var i,v = version.split(/\D+/g);
+        for (i in v)
+            v[i]=parseInt(v[i]);
+        return v;
     }
 })();

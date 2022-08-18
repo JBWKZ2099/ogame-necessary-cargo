@@ -801,23 +801,23 @@
                 218 => RR
                 219 => PF
             */
-            $(document).find(`li.technology[data-technology=204][data-status="on"] > input`).focus().val(10);
-            $(document).find(`li.technology[data-technology=205][data-status="on"] > input`).focus().val(10);
-            $(document).find(`li.technology[data-technology=206][data-status="on"] > input`).focus().val(1);
-            $(document).find(`li.technology[data-technology=207][data-status="on"] > input`).focus().val(1);
-            $(document).find(`li.technology[data-technology=215][data-status="on"] > input`).focus().val(1);
-            $(document).find(`li.technology[data-technology=211][data-status="on"] > input`).focus().val(1);
-            $(document).find(`li.technology[data-technology=213][data-status="on"] > input`).focus().val(1);
-            $(document).find(`li.technology[data-technology=218][data-status="on"] > input`).focus().val(1);
-            $(document).find(`li.technology[data-technology=219][data-status="on"] > input`).focus().val(1);
+            $(document).find(`li.technology[data-technology=204][data-status="on"] > input`).focus().val(50);
+            $(document).find(`li.technology[data-technology=205][data-status="on"] > input`).focus().val(50);
+            $(document).find(`li.technology[data-technology=206][data-status="on"] > input`).focus().val(50);
+            $(document).find(`li.technology[data-technology=207][data-status="on"] > input`).focus().val(50);
+            $(document).find(`li.technology[data-technology=215][data-status="on"] > input`).focus().val(50);
+            $(document).find(`li.technology[data-technology=211][data-status="on"] > input`).focus().val(50);
+            $(document).find(`li.technology[data-technology=213][data-status="on"] > input`).focus().val(50);
+            $(document).find(`li.technology[data-technology=218][data-status="on"] > input`).focus().val(50);
+            $(document).find(`li.technology[data-technology=219][data-status="on"] > input`).focus().val(50);
 
             /*
                 202 => NPC
                 203 => NGC
                 210 => Son
             */
-            $(document).find(`li.technology[data-technology=202][data-status="on"] > input`).focus().val(200);
-            $(document).find(`li.technology[data-technology=203][data-status="on"] > input`).focus().val(200);
+            $(document).find(`li.technology[data-technology=202][data-status="on"] > input`).focus().val(500);
+            $(document).find(`li.technology[data-technology=203][data-status="on"] > input`).focus().val(500);
             $(document).find(`li.technology[data-technology=210][data-status="on"] > input`).focus().val(100);
 
             $(document).find("#continueToFleet2").focus();
@@ -1167,7 +1167,7 @@
 
         var pattern_match=/\">(.*?)<\/span/gi;
         var box_content = $(`#${type}_box`).attr("title").match(pattern_match);
-        box_content[0] = $(`#resources_${type}`).html();
+        box_content[0] = $(`#resources_${type}`).attr("data-raw");
 
         for(i in box_content)
             box_content[i] = parseInt(box_content[i].replace(/[^0-9]+/g, ''));

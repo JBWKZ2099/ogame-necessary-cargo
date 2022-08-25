@@ -50,6 +50,33 @@
         localStorage.setItem(_localstorage_varname, JSON.stringify(settings));
     }
 
+    /*se podrá eliminar en la siguiente update*/
+        if( JSON.parse(settings.config).expes_ships===undefined || JSON.parse(settings.config).expes_ships==null || JSON.parse(settings.config).expes_ships=="" ) {
+            var conf = {},
+                new_sett = JSON.parse( settings.config );
+
+            conf[202] = 500;
+            conf[203] = 500;
+            conf[204] = 50;
+            conf[205] = 50;
+            conf[206] = 50;
+            conf[207] = 50;
+            conf[208] = 0;
+            conf[209] = 0;
+            conf[210] = 100;
+            conf[211] = 50;
+            conf[213] = 50;
+            conf[214] = 0;
+            conf[215] = 50;
+            conf[218] = 50;
+            conf[219] = 50;
+
+            new_sett["expes_ships"] = conf;
+            settings["config"] = JSON.stringify(new_sett);
+            localStorage.setItem(_localstorage_varname, JSON.stringify(settings));
+        }
+    /*se podrá eliminar en la siguiente update*/
+
     settings = JSON.parse( JSON.parse(localStorage.getItem(_localstorage_varname)).config );
 
     /*Only for debug*/
@@ -394,6 +421,17 @@
             pf_qty = $(`input[name="pf_qty"]`).val();
         }
 
+        /*Obtnemos la cantidad de naves ingresadas*/
+            var expes_ships = {};
+            $(document).find(".ncsp_ship_selection_table .ship_input_row.shipValue").each(function(i, el){
+                var element = $(el).find("input").val(),
+                    ship_id = $(el).find("input").attr("name"),
+                    ship_qty = element=="" || element==null || typeof element=="undefined" ? 0 : parseInt(element);
+
+                    expes_ships[ship_id] = ship_qty;
+            });
+        /*Obtnemos la cantidad de naves ingresadas*/
+
         var new_settings = {};
 
         settings.time = time;
@@ -406,6 +444,7 @@
         settings.fleet_per_galaxy = fleet_per_galaxy;
         settings.full_fleet = full_fleet;
         settings.ship_cargo = ship_cargo;
+        settings.expes_ships = expes_ships;
 
         new_settings["config"] = JSON.stringify(settings);
         localStorage.setItem(_localstorage_varname, JSON.stringify(new_settings));
@@ -436,7 +475,29 @@
         }
     });
 
+    $(document).on("focus", ".ncsp_ship_selection_table .ship_input_row.shipValue > input", function(){
+        $(this).attr("data-old-value", $(this).val());
+        clearInput(this);
+    });
 
+    $(document).on("blur", ".ncsp_ship_selection_table .ship_input_row.shipValue > input", function(){
+        $(this).val( $(this).attr("data-old-value") );
+    });
+
+    $(document).on("keyup", ".ncsp_ship_selection_table .ship_input_row.shipValue > input", function(){
+        $(this).attr("data-old-value", $(this).val());
+    });
+
+    $(document).on("click", ".ncsp-accordion-trigger", function(e){
+        e.preventDefault();
+        if( !$(this).hasClass("active") ) {
+            $(".ncsp-accordion-trigger").removeClass("active");
+            $(".ncsp-accordion.active").removeClass("active").slideUp(100);
+
+            $(this).addClass("active")
+            $(this).next().addClass("active").slideDown(100);
+        }
+    });
 
 
     /*Funcionalidad para almacenar la cantidad de naves necesarias en cada planeta*/
@@ -478,25 +539,8 @@
             localStorage.setItem(_localstorage_varname, JSON.stringify(new_pl_sett));
         }
 
-        /*Se podrá borrar en la siguiente actualización del script*/
-        if( typeof current_settings.ship_cargo==="undefined" ) {
-            /* JSON.parse( JSON.parse(localStorage.__LS_s130_mx_necessaryCargo).config ) */
-            var added_settings = {};
-            var new_sett = {};
-            added_settings = current_settings;
-
-            added_settings["ship_cargo"] = false;
-
-            new_sett["config"] = JSON.stringify(added_settings);
-            localStorage.setItem(_localstorage_varname, JSON.stringify(new_sett));
-        }
-        /*Se podrá borrar en la siguiente actualización del script*/
-
         if( theHref.indexOf("/game/index.php?page=ingame&component=fleetdispatch")>-1 ) {
             if( current_settings.fleet_per_planet===true || current_settings.fleet_per_galaxy===true || current_settings.full_fleet===true ) {
-                var plist = null;
-                var plist = JSON.parse( JSON.parse(localStorage.getItem(_localstorage_varname)).config ).planetList;
-                plist = sortObjectByKeys(plist);
                 var count_sub_npc = 0,
                     count_sub_ngc = 0,
                     count_sub_rec = 0,
@@ -504,8 +548,57 @@
                     count_tot_npc = 0,
                     count_tot_ngc = 0,
                     count_tot_rec = 0,
-                    count_tot_pf = 0;
-                var galaxies = [];
+                    count_tot_pf = 0,
+                    galaxies = [],
+                    planets = getElementsByClass("smallplanet"),
+                    numPlanets = planets.length,
+                    listaPlanetas = "",
+                    planet_deletes = 0;
+
+                for (var i=0; i<planets.length; i++ ) {
+                    var cord = getElementsByClass("planet-koords", planets[i]),
+                        nombre = getElementsByClass("planet-name", planets[i]);
+
+                    listaPlanetas += cord[0].innerHTML + ";";
+                }
+
+                listaPlanetas = listaPlanetas.slice(0, -1).split(";");
+
+                /*Buscamos si los planetas existentes están en el objeto de configuración*/
+                    if( numPlanets>0 ) {
+                        var planet_list_config = [],
+                            i=0,
+                            _index;
+
+                        /*Se crea un array adicional para guardar únicamente las coordenadas de los planetas*/
+                        for( i=0; i<=Object.keys(settings.planetList).length; i++ )
+                            planet_list_config.push( Object.keys(settings.planetList)[i] );
+
+                        /*Se identifican las coordenadas de planetas que no están en la cuenta*/
+                        for( i=0; i<=listaPlanetas.length; i++ ) {
+                            _index = planet_list_config.indexOf(listaPlanetas[i]);
+                            if( _index>-1 )
+                                planet_list_config.splice(_index, 1);
+                        }
+
+                        /*Se eliminan coordenadas de los planetas que no están en la cuenta*/
+                        for( i=0; i<=planet_list_config.length; i++ ) {
+                            delete settings.planetList[ planet_list_config[i] ];
+                            planet_deletes++;
+                        }
+
+                        /*Guardamos en caso de que hayan habido eliminaciones*/
+                        if( planet_deletes>0 ) {
+                            var new_sett = {}
+                            new_sett["config"] = JSON.stringify(settings);
+                            localStorage.setItem(_localstorage_varname, JSON.stringify(new_sett));
+                        }
+                    }
+                /**/
+
+                var plist = null;
+                var plist = JSON.parse( JSON.parse(localStorage.getItem(_localstorage_varname)).config ).planetList;
+                plist = sortObjectByKeys(plist);
 
                 var table_plist = `
                     <div class="ncs-text-center" style="margin-top:15px;">
@@ -789,36 +882,12 @@
             simulateMouseClick( $("#missionButton15") );
 
             $(document).find(`li.technology > input`).val("").keyup();
+            var expes_ships = settings.expes_ships;
 
-            /*
-                204 => Lig
-                205 => Pes
-                206 => Cru
-                207 => Nb
-                215 => Bb
-                211 => Des
-                213 => Aco
-                218 => RR
-                219 => PF
-            */
-            $(document).find(`li.technology[data-technology=204][data-status="on"] > input`).focus().val(50);
-            $(document).find(`li.technology[data-technology=205][data-status="on"] > input`).focus().val(50);
-            $(document).find(`li.technology[data-technology=206][data-status="on"] > input`).focus().val(50);
-            $(document).find(`li.technology[data-technology=207][data-status="on"] > input`).focus().val(50);
-            $(document).find(`li.technology[data-technology=215][data-status="on"] > input`).focus().val(50);
-            $(document).find(`li.technology[data-technology=211][data-status="on"] > input`).focus().val(50);
-            $(document).find(`li.technology[data-technology=213][data-status="on"] > input`).focus().val(50);
-            $(document).find(`li.technology[data-technology=218][data-status="on"] > input`).focus().val(50);
-            $(document).find(`li.technology[data-technology=219][data-status="on"] > input`).focus().val(50);
-
-            /*
-                202 => NPC
-                203 => NGC
-                210 => Son
-            */
-            $(document).find(`li.technology[data-technology=202][data-status="on"] > input`).focus().val(500);
-            $(document).find(`li.technology[data-technology=203][data-status="on"] > input`).focus().val(500);
-            $(document).find(`li.technology[data-technology=210][data-status="on"] > input`).focus().val(100);
+            $.each(expes_ships, function(i, el){
+                if( el>0 )
+                    $(document).find(`li.technology[data-technology=${i}][data-status="on"] > input`).focus().val(el);
+            });
 
             $(document).find("#continueToFleet2").focus();
         });
@@ -915,6 +984,9 @@
                 margin: 8px 0 0 0;
                 opacity: 0.5;
             }
+            #ncsp {
+                margin-top: -1px;
+            }
             #ncsp_main {
                 padding: 15px 25px 0 25px;
                 background: url("https://gf1.geo.gfsrv.net/cdn9e/4f73643e86a952be4aed7fdd61805a.gif") repeat-y scroll 5px 0px transparent;
@@ -1005,6 +1077,21 @@
                 font-weight: bold;
                 background-color: rgba(0,0,0,0.65);
             }
+            .ncsp-no-margin { margin-bottom: 0 !important; padding-bottom: 0 !important; }
+            .ncsp_config_title {
+                font-size: 11px;
+                font-weight: bold;
+                color: #6F9FC8;
+                line-height: 22px;
+                background: url("http://gf1.geo.gfsrv.net/cdn0b/d55059f8c9bab5ebf9e8a3563f26d1.gif") no-repeat scroll 0 0 #13181D;
+                height: 22px;
+                margin: 0 0 10px 0;
+                padding: 0 0 0 40px;
+                border: 1px solid #000;
+                overflow: hidden;
+                cursor: pointer;
+            }
+            .ncsp_ship_lbl { width: 120px !important; }
         </style>
     `);
 
@@ -1016,7 +1103,6 @@
         full_fleet_tooltip = `Flota completa|<ol><li>Se mostrará la cantidad de flota con y sin las naves adicionales para los recursos generados en cierto tiempo (este dato se configura en el campo 'Adicionar Tiempo').</li></ol>`,
         ship_cargo_tooltip = `Capacidad de naves|<ol><li>Se mostrará la capacidad de carga de las naves en la vista Flota.</li></ol>`;
 
-
     $("#middle .maincontent").prepend(`
         <div id="ncsp_window" class="dinamic-jbwkz2099" style="display:none;">
             <div id="ncsp_header">
@@ -1025,8 +1111,8 @@
             </div>
 
             <div id="ncsp_main">
-                <div id="ncsp">
-
+                <div class="ncsp_config_title ncsp-no-margin ncsp-accordion-trigger active">General</div>
+                <div id="ncsp" class="ncsp-accordion active" style="">
                     <table cellspacing="0" cellpadding="0">
                         <tbody>
                             <tr>
@@ -1117,7 +1203,7 @@
                                     <input id="full_fleet" name="full_fleet" type="checkbox" ${settings.full_fleet ? "checked" : ""}>
                                 </td>
                             </tr>
-                            <tr>
+                            <tr class="alt">
                                 <td class="ncsp_label">
                                     <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${ship_cargo_tooltip}">
                                         Mostrar velocidad de las naves
@@ -1129,7 +1215,198 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
 
+                <div class="ncsp_config_title ncsp-no-margin ncsp-accordion-trigger">Flota para expedición</div>
+                <div id="ncsp" class="ncsp-accordion" style="display:none;">
+                    <table cellpadding="0" cellspacing="0" class="list ship_selection_table ncsp_ship_selection_table" id="mail">
+                        <tbody>
+                            <tr>
+                                <td class="ship_txt_row textLeft images ncsp_ship_lbl">
+                                    <div class="shipImage float_left">
+                                        <img class="tech204" width="28" height="28" alt="Cazador ligero" src="https://gf2.geo.gfsrv.net/cdndf/3e567d6f16d040326c7a0ea29a4f41.gif">
+                                    </div>
+                                    <p>
+                                        Cazador ligero
+                                    </p>
+                                </td>
+                                <td class="ship_input_row shipValue">
+                                    <input type="text" pattern="[0-9,.]*" class="textRight textinput" size="3" id="ship204" name="204" value="${settings.expes_ships[204]}" autocomplete="off" onkeyup="checkIntInput(this, 0, null);">
+                                </td>
+                                <td class="ship_txt_row textLeft images ncsp_ship_lbl">
+                                    <div class="shipImage float_left">
+                                        <img class="tech205" width="28" height="28" alt="Cazador pesado" src="https://gf2.geo.gfsrv.net/cdndf/3e567d6f16d040326c7a0ea29a4f41.gif">
+                                    </div>
+                                    <p>
+                                        Cazador pesado
+                                    </p>
+                                </td>
+                                <td class="ship_input_row shipValue">
+                                    <input type="text" pattern="[0-9,.]*" class="textRight textinput" size="3" id="ship205" name="205" value="${settings.expes_ships[205]}" autocomplete="off" onkeyup="checkIntInput(this, 0, null);">
+                                </td>
+                            </tr>
+                            <tr class="alt">
+                                <td class="ship_txt_row textLeft images ncsp_ship_lbl">
+                                    <div class="shipImage float_left">
+                                        <img class="tech206" width="28" height="28" alt="Crucero" src="https://gf2.geo.gfsrv.net/cdndf/3e567d6f16d040326c7a0ea29a4f41.gif">
+                                    </div>
+                                    <p>
+                                        Crucero
+                                    </p>
+                                </td>
+                                <td class="ship_input_row shipValue">
+                                    <input type="text" pattern="[0-9,.]*" class="textRight textinput" size="3" id="ship206" name="206" value="${settings.expes_ships[206]}" autocomplete="off" onkeyup="checkIntInput(this, 0, null);">
+                                </td>
+                                <td class="ship_txt_row textLeft images ncsp_ship_lbl">
+                                    <div class="shipImage float_left">
+                                        <img class="tech207" width="28" height="28" alt="Nave de batalla" src="https://gf2.geo.gfsrv.net/cdndf/3e567d6f16d040326c7a0ea29a4f41.gif">
+                                    </div>
+                                    <p>
+                                        Nave de batalla
+                                    </p>
+                                </td>
+                                <td class="ship_input_row shipValue">
+                                    <input type="text" pattern="[0-9,.]*" class="textRight textinput" size="3" id="ship207" name="207" value="${settings.expes_ships[207]}" autocomplete="off" onkeyup="checkIntInput(this, 0, null);">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ship_txt_row textLeft images ncsp_ship_lbl">
+                                    <div class="shipImage float_left">
+                                        <img class="tech215" width="28" height="28" alt="Acorazado" src="https://gf2.geo.gfsrv.net/cdndf/3e567d6f16d040326c7a0ea29a4f41.gif">
+                                    </div>
+                                    <p>
+                                        Acorazado
+                                    </p>
+                                </td>
+                                <td class="ship_input_row shipValue">
+                                    <input type="text" pattern="[0-9,.]*" class="textRight textinput" size="3" id="ship215" name="215" value="${settings.expes_ships[215]}" autocomplete="off" onkeyup="checkIntInput(this, 0, null);">
+                                </td>
+                                <td class="ship_txt_row textLeft images ncsp_ship_lbl">
+                                    <div class="shipImage float_left">
+                                        <img class="tech211" width="28" height="28" alt="Bombardero" src="https://gf2.geo.gfsrv.net/cdndf/3e567d6f16d040326c7a0ea29a4f41.gif">
+                                    </div>
+                                    <p>
+                                        Bombardero
+                                    </p>
+                                </td>
+                                <td class="ship_input_row shipValue">
+                                    <input type="text" pattern="[0-9,.]*" class="textRight textinput" size="3" id="ship211" name="211" value="${settings.expes_ships[211]}" autocomplete="off" onkeyup="checkIntInput(this, 0, null);">
+                                </td>
+                            </tr>
+                            <tr class="alt">
+                                <td class="ship_txt_row textLeft images ncsp_ship_lbl">
+                                    <div class="shipImage float_left">
+                                        <img class="tech213" width="28" height="28" alt="Destructor" src="https://gf2.geo.gfsrv.net/cdndf/3e567d6f16d040326c7a0ea29a4f41.gif">
+                                    </div>
+                                    <p>
+                                        Destructor
+                                    </p>
+                                </td>
+                                <td class="ship_input_row shipValue">
+                                    <input type="text" pattern="[0-9,.]*" class="textRight textinput" size="3" id="ship213" name="213" value="${settings.expes_ships[213]}" autocomplete="off" onkeyup="checkIntInput(this, 0, null);">
+                                </td>
+                                <td class="ship_txt_row textLeft images ncsp_ship_lbl">
+                                    <div class="shipImage float_left">
+                                        <img class="tech214" width="28" height="28" alt="Estrella de la muerte" src="https://gf2.geo.gfsrv.net/cdndf/3e567d6f16d040326c7a0ea29a4f41.gif">
+                                    </div>
+                                    <p>
+                                        Estrella de la muerte
+                                    </p>
+                                </td>
+                                <td class="ship_input_row shipValue">
+                                    <input type="text" pattern="[0-9,.]*" class="textRight textinput" size="3" id="ship214" name="214" value="${settings.expes_ships[214]}" autocomplete="off" onkeyup="checkIntInput(this, 0, null);">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ship_txt_row textLeft images ncsp_ship_lbl">
+                                    <div class="shipImage float_left">
+                                        <img class="tech218" width="28" height="28" alt="Segador" src="https://gf2.geo.gfsrv.net/cdndf/3e567d6f16d040326c7a0ea29a4f41.gif">
+                                    </div>
+                                    <p>
+                                        Segador
+                                    </p>
+                                </td>
+                                <td class="ship_input_row shipValue">
+                                    <input type="text" pattern="[0-9,.]*" class="textRight textinput" size="3" id="ship218" name="218" value="${settings.expes_ships[218]}" autocomplete="off" onkeyup="checkIntInput(this, 0, null);">
+                                </td>
+                                <td class="ship_txt_row textLeft images ncsp_ship_lbl">
+                                    <div class="shipImage float_left">
+                                        <img class="tech219" width="28" height="28" alt="Explorador" src="https://gf2.geo.gfsrv.net/cdndf/3e567d6f16d040326c7a0ea29a4f41.gif">
+                                    </div>
+                                    <p>
+                                        Explorador
+                                    </p>
+                                </td>
+                                <td class="ship_input_row shipValue">
+                                    <input type="text" pattern="[0-9,.]*" class="textRight textinput" size="3" id="ship219" name="219" value="${settings.expes_ships[219]}" autocomplete="off" onkeyup="checkIntInput(this, 0, null);">
+                                </td>
+                            </tr>
+                            <tr class="alt">
+                                <td class="ship_txt_row textLeft images ncsp_ship_lbl">
+                                    <div class="shipImage float_left">
+                                        <img class="tech202" width="28" height="28" alt="Nave pequeña de carga" src="https://gf2.geo.gfsrv.net/cdndf/3e567d6f16d040326c7a0ea29a4f41.gif">
+                                    </div>
+                                    <p>
+                                        Nave pequeña de carga
+                                    </p>
+                                </td>
+                                <td class="ship_input_row shipValue">
+                                    <input type="text" pattern="[0-9,.]*" class="textRight textinput" size="3" id="ship202" name="202" value="${settings.expes_ships[202]}" autocomplete="off" onkeyup="checkIntInput(this, 0, null);">
+                                </td>
+                                <td class="ship_txt_row textLeft images ncsp_ship_lbl">
+                                    <div class="shipImage float_left">
+                                        <img class="tech203" width="28" height="28" alt="Nave grande de carga" src="https://gf2.geo.gfsrv.net/cdndf/3e567d6f16d040326c7a0ea29a4f41.gif">
+                                    </div>
+                                    <p>
+                                        Nave grande de carga
+                                    </p>
+                                </td>
+                                <td class="ship_input_row shipValue">
+                                    <input type="text" pattern="[0-9,.]*" class="textRight textinput" size="3" id="ship203" name="203" value="${settings.expes_ships[203]}" autocomplete="off" onkeyup="checkIntInput(this, 0, null);">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ship_txt_row textLeft images ncsp_ship_lbl">
+                                    <div class="shipImage float_left">
+                                        <img class="tech208" width="28" height="28" alt="Nave de la colonia" src="https://gf2.geo.gfsrv.net/cdndf/3e567d6f16d040326c7a0ea29a4f41.gif">
+                                    </div>
+                                    <p>
+                                        Nave de la colonia
+                                    </p>
+                                </td>
+                                <td class="ship_input_row shipValue">
+                                    <input type="text" pattern="[0-9,.]*" class="textRight textinput" size="3" id="ship208" name="208" value="${settings.expes_ships[208]}" autocomplete="off" onkeyup="checkIntInput(this, 0, null);">
+                                </td>
+                                <td class="ship_txt_row textLeft images ncsp_ship_lbl">
+                                    <div class="shipImage float_left">
+                                        <img class="tech209" width="28" height="28" alt="Reciclador" src="https://gf2.geo.gfsrv.net/cdndf/3e567d6f16d040326c7a0ea29a4f41.gif">
+                                    </div>
+                                    <p>
+                                        Reciclador
+                                    </p>
+                                </td>
+                                <td class="ship_input_row shipValue">
+                                    <input type="text" pattern="[0-9,.]*" class="textRight textinput" size="3" id="ship209" name="209" value="${settings.expes_ships[209]}" autocomplete="off" onkeyup="checkIntInput(this, 0, null);">
+                                </td>
+                            </tr>
+                            <tr class="alt">
+                                    <td class="ship_txt_row textLeft images ncsp_ship_lbl">
+                                    <div class="shipImage float_left">
+                                        <img class="tech210" width="28" height="28" alt="Sonda de espionaje" src="https://gf2.geo.gfsrv.net/cdndf/3e567d6f16d040326c7a0ea29a4f41.gif">
+                                    </div>
+                                    <p>
+                                        Sonda de espionaje
+                                    </p>
+                                </td>
+                                <td class="ship_input_row shipValue">
+                                    <input type="text" pattern="[0-9,.]*" class="textRight textinput" size="3" id="ship210" name="210" value="${settings.expes_ships[210]}" autocomplete="off" onkeyup="checkIntInput(this, 0, null);">
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="ncsp">
                     <table cellspacing="0" cellpadding="0" class="last">
                         <tbody>
                             <tr>
@@ -1209,6 +1486,32 @@
         }
         for (var i = 0; i < selector.length; i++)
             eventFire (selector [i], "click");
+    }
+
+    function getElementsByClass(searchClass,node,tag) {
+        var classElements = new Array();
+        if (node == null)
+            node = document;
+        if (tag == null)
+            tag = '*';
+        var els = node.getElementsByTagName(tag);
+        var elsLen = els.length;
+
+        for (var i = 0, j = 0; i < elsLen; i++) {
+            var sep = els[i].className.split(" ");
+            var content = false;
+
+            for(var k = 0; k < sep.length; k++){
+                if(sep[k] == searchClass)
+                    content = true;
+            }
+
+            if (els[i].className == searchClass || content) {
+                classElements[j] = els[i];
+                j++;
+            }
+        }
+        return classElements;
     }
 
     function parseVersion(version) {

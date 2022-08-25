@@ -31,9 +31,27 @@
         settings = JSON.parse(localStorage.getItem(_localstorage_varname));
 
     if( settings===undefined || settings==null || settings=="" ) {
-        var conf = {};
-        settings = {};
+        var conf = {},
+            settings = {},
+            expes_ships = {};
 
+        expes_ships[202] = 500;
+        expes_ships[203] = 500;
+        expes_ships[204] = 50;
+        expes_ships[205] = 50;
+        expes_ships[206] = 50;
+        expes_ships[207] = 50;
+        expes_ships[208] = 0;
+        expes_ships[209] = 0;
+        expes_ships[210] = 100;
+        expes_ships[211] = 50;
+        expes_ships[213] = 50;
+        expes_ships[214] = 0;
+        expes_ships[215] = 50;
+        expes_ships[218] = 50;
+        expes_ships[219] = 50;
+
+        conf["expes_ships"] = expes_ships;
         conf["time"] = "60";
         conf["fixed_qty_checkbox"] = false;
         conf["fleet_per_planet"] = true;
@@ -565,7 +583,7 @@
                 listaPlanetas = listaPlanetas.slice(0, -1).split(";");
 
                 /*Buscamos si los planetas existentes están en el objeto de configuración*/
-                    if( numPlanets>0 ) {
+                    if( numPlanets>0 && Object.keys(settings.planetList).length>0 ) {
                         var planet_list_config = [],
                             i=0,
                             _index;

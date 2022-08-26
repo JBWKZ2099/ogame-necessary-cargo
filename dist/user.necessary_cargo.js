@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Necessary cargo ships
 // @namespace    necessary_cargo
-// @version      1.5
+// @version      1.8
 // @description  Displays necessary cargo ships to move / transport the resources
 // @author       JBWKZ2099
 // @homepageURL  https://github.com/JBWKZ2099/ogame-necessary-cargo
@@ -24,6 +24,10 @@
     // localStorage.removeItem(_localstorage_varname);
     var _LS_val = {};
     var ogame_version = parseVersion( $(`meta[name="ogame-version"]`).attr("content") );
+    var unsafe = window;
+    try {
+        unsafe = unsafeWindow;
+    } catch(e) {}
 
     var settings = null;
 
@@ -35,21 +39,21 @@
             settings = {},
             expes_ships = {};
 
-        expes_ships[202] = 500;
-        expes_ships[203] = 500;
-        expes_ships[204] = 50;
-        expes_ships[205] = 50;
-        expes_ships[206] = 50;
-        expes_ships[207] = 50;
+        expes_ships[202] = 500;  /*NPC*/
+        expes_ships[203] = 500;  /*NGC*/
+        expes_ships[204] = 50;   /*Lig*/
+        expes_ships[205] = 50;   /*Pes*/
+        expes_ships[206] = 50;   /*Cru*/
+        expes_ships[207] = 50;   /*Nb*/
         expes_ships[208] = 0;
         expes_ships[209] = 0;
-        expes_ships[210] = 100;
-        expes_ships[211] = 50;
-        expes_ships[213] = 50;
+        expes_ships[210] = 100;  /*Son*/
+        expes_ships[211] = 50;   /*Des*/
+        expes_ships[213] = 50;   /*Aco*/
         expes_ships[214] = 0;
-        expes_ships[215] = 50;
-        expes_ships[218] = 50;
-        expes_ships[219] = 50;
+        expes_ships[215] = 50;   /*Bb*/
+        expes_ships[218] = 50;   /*RR*/
+        expes_ships[219] = 50;   /*PF*/
 
         conf["expes_ships"] = expes_ships;
         conf["time"] = "60";
@@ -254,11 +258,21 @@
                     border-top-right-radius: 3px;
                     border-bottom-right-radius: 3px;
                 }
+
+                .tbl-necesary-cargo tbody > tr[style]:hover { opacity: 0.6 !important; }
+                .tbl-necesary-cargo tbody > tr:not([style]):hover,
+                .tbl-necesary-cargo tbody > tr.current[style]:hover,
+                .tbl-necesary-cargo tbody > tr.current > td > .ncs-setup-ship:hover { opacity: 1 !important; }
+                .tbl-necesary-cargo tbody > tr.current > td > .ncs-setup-ship[style] { color: #2FE000; }
+
                 .tbl-necesary-cargo tbody > tr:hover > td,
-                .tbl-necesary-cargo tbody > tr.current > td {
+                .tbl-necesary-cargo tbody > tr.current > td,
+                .tbl-necesary-cargo tbody > tr[data-current].hover > td {
                     color: #2FE000;
                     background-color: #182028;
                 }
+
+                .ncs-open-jumpgate { cursor: pointer; }
 
                 .tbl-necesary-cargo tbody > tr.current > td {
                     border-top: 1px solid #2FE000;
@@ -625,7 +639,7 @@
                         </a>
                     </div>
 
-                    <table class="tbl-necesary-cargo" style="${(current_settings.fleet_per_planet ? "" : "display:none;" )}">
+                    <table class="tbl-necesary-cargo tbl-ncsp-planets" style="${(current_settings.fleet_per_planet ? "" : "display:none;" )}">
                         <thead>
                             <tr>
                                 <th colspan="5" class="ncs-text-center ncs-text-blue">NCS - Cantidad de flota por planeta</th>
@@ -645,7 +659,7 @@
                     galaxies.push(galaxy);
 
                     table_plist += `
-                        <tr class="${( i==planetKoords || i==_moonKoords ? "current" : "" )}"">
+                        <tr class="${( i==planetKoords || i==_moonKoords ? "current" : "" )}" ${( i==planetKoords || i==_moonKoords ? "data-current" : "" )}>
                             <td class="ncs-text-center ncs-koords" valign="middle">
                                 ${i}
 
@@ -806,28 +820,36 @@
 
                         ship_count_html += `
                                     <td class="ncs-text-center">
-                                        <span style="${(!settings.full_fleet ? "display:none;" : "")}">
+                                        <span class="ncs-open-jumpgate" data-ship="202" data-qty="${e.sub_npc}" style="${(!settings.full_fleet ? "display:none;" : "")}">
                                             ${e.sub_npc} |
                                         </span>
-                                        ${e.tot_npc}
+                                        <span class="ncs-open-jumpgate" data-ship="202" data-qty="${e.tot_npc}">
+                                            ${e.tot_npc}
+                                        </span>
                                     </td>
                                     <td class="ncs-text-center">
-                                        <span style="${(!settings.full_fleet ? "display:none;" : "")}">
+                                        <span class="ncs-open-jumpgate" data-ship="203" data-qty="${e.sub_ngc}" style="${(!settings.full_fleet ? "display:none;" : "")}">
                                             ${e.sub_ngc} |
                                         </span>
-                                        ${e.tot_ngc}
+                                        <span class="ncs-open-jumpgate" data-ship="203" data-qty="${e.tot_ngc}">
+                                            ${e.tot_ngc}
+                                        </span>
                                     </td>
                                     <td class="ncs-text-center">
-                                        <span style="${(!settings.full_fleet ? "display:none;" : "")}">
+                                        <span class="ncs-open-jumpgate" data-ship="209" data-qty="${e.sub_rec}" style="${(!settings.full_fleet ? "display:none;" : "")}">
                                             ${e.sub_rec} |
                                         </span>
-                                        ${e.tot_rec}
+                                        <span class="ncs-open-jumpgate" data-ship="209" data-qty="${e.tot_rec}">
+                                            ${e.tot_rec}
+                                        </span>
                                     </td>
                                     <td class="ncs-text-center">
-                                        <span style="${(!settings.full_fleet ? "display:none;" : "")}">
+                                        <span class="ncs-open-jumpgate" data-ship="219" data-qty="${e.sub_pf}" style="${(!settings.full_fleet ? "display:none;" : "")}">
                                             ${e.sub_pf} |
                                         </span>
-                                        ${e.tot_pf}
+                                        <span class="ncs-open-jumpgate" data-ship="219" data-qty="${e.tot_pf}">
+                                            ${e.tot_pf}
+                                        </span>
                                     </td>`;
 
                         ship_count_html += `
@@ -947,6 +969,20 @@
             var coords = (($(this).parent().parent().find(".ncs-koords").text()).split("[")[1]).split("]")[0];
             var selected = $(this).parent().parent().find(".ncs-koords .selected");
 
+            /*Se quita opacidad en los elementos que no están seleccionados para resaltar la opción seleccionada*/
+                $(document).find(".tbl-necesary-cargo.tbl-ncsp-planets tbody tr").css("opacity", "0.3");
+                $(document).find(".tbl-necesary-cargo.tbl-ncsp-planets tbody tr.current").addClass("hover");
+                $(document).find(".tbl-necesary-cargo.tbl-ncsp-planets tbody tr").removeClass("current");
+
+                $(this).parent().parent().css("opacity", "1");
+                $(this).parent().parent().addClass("current");
+            /*Se quita opacidad en los elementos que no están seleccionados para resaltar la opción seleccionada*/
+
+            /*Se quita opacidad en las cantidades de flota que no fuern seleccionados*/
+                $(document).find(".tbl-necesary-cargo.tbl-ncsp-planets tbody tr.current td:not(.ncs-koords) .ncs-setup-ship").css("opacity", "0.45");
+                $(this).css("opacity", "1");
+            /*Se quita opacidad en las cantidades de flota que no fuern seleccionados*/
+
             $(document).find(`li.technology > input`).val("").keyup();
             $(document).find(`li.technology[data-technology=${_type}][data-status="on"] > input`).focus().val(_val);
             $(document).find("#continueToFleet2").focus();
@@ -955,6 +991,18 @@
                 var selected_target = selected.hasClass("moon") ? "moon" : "name";
                 simulateMouseClick( $(document).find(`.ago_shortcuts_own a[rel="${coords}"] .ago_shortcuts_${selected_target}`) );
             }
+        });
+
+        $(document).on("click", ".ncs-open-jumpgate", function(e){
+            var $this = $(this);
+            window.location = "javascript:openJumpgate()";
+
+            setTimeout(function(){
+                var ship = $this.attr("data-ship");
+                var qty = $this.attr("data-qty");
+
+                toggleMaxShips('#jumpgateForm', ship, qty);
+            }, 1000);
         });
 
         $(document).on("click", ".ncs-koords > span", function(e){

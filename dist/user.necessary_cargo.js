@@ -1285,7 +1285,7 @@
 
                 <div class="ncsp_config_title ncsp-no-margin ncsp-accordion-trigger">Flota para expedición</div>
                 <div id="ncsp" class="ncsp-accordion" style="display:none;">
-                    <table cellpadding="0" cellspacing="0" class="list ship_selection_table ncsp_ship_selection_table" id="mail">
+                    <table cellpadding="0" cellspacing="0" class="ship_selection_table ncsp_ship_selection_table" id="mail">
                         <tbody>
                             <tr>
                                 <td class="ship_txt_row textLeft images ncsp_ship_lbl">

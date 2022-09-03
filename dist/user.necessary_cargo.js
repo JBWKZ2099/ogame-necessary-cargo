@@ -987,10 +987,43 @@
             $(document).find(`li.technology[data-technology=${_type}][data-status="on"] > input`).focus().val(_val);
             $(document).find("#continueToFleet2").focus();
 
+            var selected_target = selected.hasClass("moon") ? "moon" : "name";
+
+            /*Antigame*/
             if( $(document).find("#ago_shortcuts").length>0 ) {
-                var selected_target = selected.hasClass("moon") ? "moon" : "name";
                 simulateMouseClick( $(document).find(`.ago_shortcuts_own a[rel="${coords}"] .ago_shortcuts_${selected_target}`) );
+
+                $("#missionButton4").trigger("click");
+                return;
             }
+
+            var targets = {};
+            targets["galaxy"] = "#galaxy";
+            targets["system"] = "#system";
+            targets["position"] = "#position";
+            targets["moon"] = "#mbutton";
+            targets["planet"] = "#pbutton";
+
+            /*OGame Infinity*/
+            if( $(document).find(".ogl-harvestOptions").length>0 ) {
+                targets["galaxy"] = ".ogl-coords #galaxyInput";
+                targets["system"] = ".ogl-coords #systemInput";
+                targets["position"] = ".ogl-coords #positionInput";
+                targets["moon"] = ".ogl-moon-icon";
+                targets["planet"] = ".ogl-planet-icon";
+            }
+            var coords_split = ((coords.replace(/[\[\]]/g, "")).trim()).split(":");
+
+            $(targets.galaxy).val(coords_split[0]).keyup();
+            $(targets.system).val(coords_split[1]).keyup();
+            $(targets.position).val(coords_split[2]).keyup();
+
+            if( selected_target=="moon" )
+                simulateMouseClick($(targets.moon));
+            else
+                simulateMouseClick($(targets.planet));
+
+            $("#missionButton4").trigger("click");
         });
 
         $(document).on("click", ".ncs-open-jumpgate", function(e){

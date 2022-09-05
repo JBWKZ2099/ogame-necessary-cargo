@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Necessary cargo ships
 // @namespace    necessary_cargo
-// @version      1.8
+// @version      1.91
 // @description  Displays necessary cargo ships to move / transport the resources
 // @author       JBWKZ2099
 // @homepageURL  https://github.com/JBWKZ2099/ogame-necessary-cargo
@@ -928,6 +928,11 @@
                 if( el>0 )
                     $(document).find(`li.technology[data-technology=${i}][data-status="on"] > input`).focus().val(el);
             });
+
+            /*OGame Infinity*/
+            if( $(document).find(".ogl-harvestOptions").length>0 )
+                $(".ogl-coords #positionInput").val(16).keyup();
+
 
             $(document).find("#continueToFleet2").focus();
         });

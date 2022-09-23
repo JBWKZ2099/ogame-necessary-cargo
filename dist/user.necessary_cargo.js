@@ -323,7 +323,7 @@
                     padding: 15px;
                 }
 
-                .ncs-speed {
+                .ncs-cargo-capacity {
                     position: absolute;
                     bottom: 15px;
                     font-size: 10px;
@@ -870,49 +870,49 @@
 
             if( current_settings.ship_cargo===true ) {
                 $(`#technologies ul li[data-technology="204"] > span.sprite`).append(`
-                    <span class="ncs-speed">${addDots(fighterLight)}</span>
+                    <span class="ncs-cargo-capacity">${addDots(Math.floor(fighterLight))}</span>
                 `);
                 $(`#technologies ul li[data-technology="205"] > span.sprite`).append(`
-                    <span class="ncs-speed">${addDots(fighterHeavy)}</span>
+                    <span class="ncs-cargo-capacity">${addDots(Math.floor(fighterHeavy))}</span>
                 `);
                 $(`#technologies ul li[data-technology="206"] > span.sprite`).append(`
-                    <span class="ncs-speed">${addDots(cruiser)}</span>
+                    <span class="ncs-cargo-capacity">${addDots(Math.floor(cruiser))}</span>
                 `);
                 $(`#technologies ul li[data-technology="207"] > span.sprite`).append(`
-                    <span class="ncs-speed">${addDots(battleship)}</span>
+                    <span class="ncs-cargo-capacity">${addDots(Math.floor(battleship))}</span>
                 `);
                 $(`#technologies ul li[data-technology="215"] > span.sprite`).append(`
-                    <span class="ncs-speed">${addDots(interceptor)}</span>
+                    <span class="ncs-cargo-capacity">${addDots(Math.floor(interceptor))}</span>
                 `);
                 $(`#technologies ul li[data-technology="211"] > span.sprite`).append(`
-                    <span class="ncs-speed">${addDots(bomber)}</span>
+                    <span class="ncs-cargo-capacity">${addDots(Math.floor(bomber))}</span>
                 `);
                 $(`#technologies ul li[data-technology="213"] > span.sprite`).append(`
-                    <span class="ncs-speed">${addDots(destroyer)}</span>
+                    <span class="ncs-cargo-capacity">${addDots(Math.floor(destroyer))}</span>
                 `);
                 $(`#technologies ul li[data-technology="214"] > span.sprite`).append(`
-                    <span class="ncs-speed">${addDots(deathstar)}</span>
+                    <span class="ncs-cargo-capacity">${addDots(Math.floor(deathstar))}</span>
                 `);
                 $(`#technologies ul li[data-technology="218"] > span.sprite`).append(`
-                    <span class="ncs-speed">${addDots(reaper)}</span>
+                    <span class="ncs-cargo-capacity">${addDots(Math.floor(reaper))}</span>
                 `);
                 $(`#technologies ul li[data-technology="219"] > span.sprite`).append(`
-                    <span class="ncs-speed">${addDots(pf)}</span>
+                    <span class="ncs-cargo-capacity">${addDots(Math.floor(pf))}</span>
                 `);
                 $(`#technologies ul li[data-technology="202"] > span.sprite`).append(`
-                    <span class="ncs-speed">${addDots(ncp)}</span>
+                    <span class="ncs-cargo-capacity">${addDots(Math.floor(ncp))}</span>
                 `);
                 $(`#technologies ul li[data-technology="203"] > span.sprite`).append(`
-                    <span class="ncs-speed">${addDots(ncg)}</span>
+                    <span class="ncs-cargo-capacity">${addDots(Math.floor(ncg))}</span>
                 `);
                 $(`#technologies ul li[data-technology="208"] > span.sprite`).append(`
-                    <span class="ncs-speed">${addDots(colonyShip)}</span>
+                    <span class="ncs-cargo-capacity">${addDots(Math.floor(colonyShip))}</span>
                 `);
                 $(`#technologies ul li[data-technology="209"] > span.sprite`).append(`
-                    <span class="ncs-speed">${addDots(rec)}</span>
+                    <span class="ncs-cargo-capacity">${addDots(Math.floor(rec))}</span>
                 `);
                 $(`#technologies ul li[data-technology="210"] > span.sprite`).append(`
-                    <span class="ncs-speed">${addDots(espionageProbe)}</span>
+                    <span class="ncs-cargo-capacity">${addDots(Math.floor(espionageProbe))}</span>
                 `);
             }
         }
@@ -1310,11 +1310,11 @@
                             <tr class="alt">
                                 <td class="ncsp_label">
                                     <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${ship_cargo_tooltip}">
-                                        Mostrar velocidad de las naves
+                                        Mostrar capacidad de carga de cada nave
                                     </span>
                                 </td>
                                 <td class="ncsp_checkbox">
-                                    <input id="ship_cargo" name="ship_cargo" type="checkbox" ${settings.ship_cargo_tooltip ? "checked" : ""}>
+                                    <input id="ship_cargo" name="ship_cargo" type="checkbox" ${settings.ship_cargo ? "checked" : ""}>
                                 </td>
                             </tr>
                         </tbody>

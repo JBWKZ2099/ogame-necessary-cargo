@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Necessary cargo ships
 // @namespace    necessary_cargo
-// @version      1.91
+// @version      1.92
 // @description  Displays necessary cargo ships to move / transport the resources
 // @author       JBWKZ2099
 // @homepageURL  https://github.com/JBWKZ2099/ogame-necessary-cargo
@@ -39,21 +39,21 @@
             settings = {},
             expes_ships = {};
 
-        expes_ships[202] = 500;  /*NPC*/
-        expes_ships[203] = 500;  /*NGC*/
-        expes_ships[204] = 50;   /*Lig*/
-        expes_ships[205] = 50;   /*Pes*/
-        expes_ships[206] = 50;   /*Cru*/
-        expes_ships[207] = 50;   /*Nb*/
+        expes_ships[202] = 0;  /*NPC*/
+        expes_ships[203] = 2000;  /*NGC*/
+        expes_ships[204] = 0;   /*Lig*/
+        expes_ships[205] = 0;   /*Pes*/
+        expes_ships[206] = 0;   /*Cru*/
+        expes_ships[207] = 0;   /*Nb*/
         expes_ships[208] = 0;
         expes_ships[209] = 0;
-        expes_ships[210] = 100;  /*Son*/
-        expes_ships[211] = 50;   /*Des*/
-        expes_ships[213] = 50;   /*Aco*/
+        expes_ships[210] = 1;  /*Son*/
+        expes_ships[211] = 0;   /*Des*/
+        expes_ships[213] = 0;   /*Aco*/
         expes_ships[214] = 0;
-        expes_ships[215] = 50;   /*Bb*/
-        expes_ships[218] = 50;   /*RR*/
-        expes_ships[219] = 50;   /*PF*/
+        expes_ships[215] = 0;   /*Bb*/
+        expes_ships[218] = 1;   /*RR*/
+        expes_ships[219] = 1;   /*PF*/
 
         conf["expes_ships"] = expes_ships;
         conf["time"] = "60";
@@ -73,28 +73,12 @@
     }
 
     /*se podrá eliminar en la siguiente update*/
-        if( JSON.parse(settings.config).expes_ships===undefined || JSON.parse(settings.config).expes_ships==null || JSON.parse(settings.config).expes_ships=="" ) {
-            var conf = {},
-                new_sett = JSON.parse( settings.config );
+        if( JSON.parse(settings.config).expes_ss===undefined || JSON.parse(settings.config).expes_ss==null || JSON.parse(settings.config).expes_ss=="" ) {
+            var new_sett = JSON.parse( settings.config );
 
-            conf[202] = 500;
-            conf[203] = 500;
-            conf[204] = 50;
-            conf[205] = 50;
-            conf[206] = 50;
-            conf[207] = 50;
-            conf[208] = 0;
-            conf[209] = 0;
-            conf[210] = 100;
-            conf[211] = 50;
-            conf[213] = 50;
-            conf[214] = 0;
-            conf[215] = 50;
-            conf[218] = 50;
-            conf[219] = 50;
-
-            new_sett["expes_ships"] = conf;
+            new_sett["expes_ss"] = true;
             settings["config"] = JSON.stringify(new_sett);
+
             localStorage.setItem(_localstorage_varname, JSON.stringify(settings));
         }
     /*se podrá eliminar en la siguiente update*/
@@ -453,6 +437,10 @@
             pf_qty = $(`input[name="pf_qty"]`).val();
         }
 
+        var expes_ss = $(document).find("#ncsp_checkbox_expes_ss").prop("checked");
+        if( expes_ss===false )
+            expes_ss = parseInt( $(document).find("#ncsp_input_expes_ss").val() );
+
         /*Obtnemos la cantidad de naves ingresadas*/
             var expes_ships = {};
             $(document).find(".ncsp_ship_selection_table .ship_input_row.shipValue").each(function(i, el){
@@ -477,6 +465,7 @@
         settings.full_fleet = full_fleet;
         settings.ship_cargo = ship_cargo;
         settings.expes_ships = expes_ships;
+        settings.expes_ss = expes_ss;
 
         new_settings["config"] = JSON.stringify(settings);
         localStorage.setItem(_localstorage_varname, JSON.stringify(new_settings));
@@ -528,6 +517,19 @@
 
             $(this).addClass("active")
             $(this).next().addClass("active").slideDown(100);
+        }
+    });
+
+    $(document).on("change", "#ncsp_checkbox_expes_ss", function(e){
+        var expes_chkbx = $(this).prop("checked");
+
+        if( expes_chkbx===false ) {
+            var current_ss = ($(document).find(`meta[name="ogame-planet-coordinates"]`).attr("content")).split(":")[1];
+            $(document).find("#ncsp_input_expes_ss_container").show();
+            $(document).find("#ncsp_input_expes_ss").val( parseInt(current_ss) );
+        } else {
+            $(document).find("#ncsp_input_expes_ss_container").hide();
+            $(document).find("#ncsp_input_expes_ss").val( parseInt(0) );
         }
     });
 
@@ -925,13 +927,23 @@
             var expes_ships = settings.expes_ships;
 
             $.each(expes_ships, function(i, el){
-                if( el>0 )
+                if( el>0 ) {
+                    debugger;
                     $(document).find(`li.technology[data-technology=${i}][data-status="on"] > input`).focus().val(el);
+                }
             });
 
             /*OGame Infinity*/
-            if( $(document).find(".ogl-harvestOptions").length>0 )
+            if( $(document).find(".ogl-harvestOptions").length>0 ) {
                 $(".ogl-coords #positionInput").val(16).keyup();
+            }
+
+            if( settings.expes_ss!==false ) {
+                if( $(document).find(".ogl-harvestOptions").length>0 )
+                    $(".ogl-coords #systemInput").val( parseInt(settings.expes_ss) ).keyup();
+                else
+                    $("#system").val( parseInt(settings.expes_ss) ).keyup();
+            }
 
 
             $(document).find("#continueToFleet2").focus();
@@ -1205,7 +1217,8 @@
         fleet_per_planet_tooltip = `Flota por planeta|<ol><li>Se mostrará la cantidad de flota necesaria para transportar los recursos en una tabla en la pantalla de Flota.</li></ol>`,
         fleet_per_galaxy_tooltip = `Flota por galaxia|<ol><li>Se mostrará la cantidad de flota necesaria para transportar los recursos en una tabla en la pantalla de Flota. Este dato calcula la flota necesaria por galaxia para realizar el salto de las naves (Ejemplo: Si se tienen 5 planetas en G1 y la flota principal se encuentra en G3, se calculan las naves necesarias para transportar todos los recursos de G1 y realizar el salto de las naves necesarias que se encuentran en G3).</li></ol>`,
         full_fleet_tooltip = `Flota completa|<ol><li>Se mostrará la cantidad de flota con y sin las naves adicionales para los recursos generados en cierto tiempo (este dato se configura en el campo 'Adicionar Tiempo').</li></ol>`,
-        ship_cargo_tooltip = `Capacidad de naves|<ol><li>Se mostrará la capacidad de carga de las naves en la vista Flota.</li></ol>`;
+        ship_cargo_tooltip = `Capacidad de naves|<ol><li>Se mostrará la capacidad de carga de las naves en la vista Flota.</li></ol>`,
+        expes_ss_tooltip = `Mismo sistema solar|<ol><li>Si se marca la opción por defecto se seleccionará la posición actual para las expediciones, de lo contrario se podrá ingresar a qué sistema solar se desea enviar la flota.</li></ol>`;
 
     $("#middle .maincontent").prepend(`
         <div id="ncsp_window" class="dinamic-jbwkz2099" style="display:none;">
@@ -1323,7 +1336,30 @@
 
                 <div class="ncsp_config_title ncsp-no-margin ncsp-accordion-trigger">Flota para expedición</div>
                 <div id="ncsp" class="ncsp-accordion" style="display:none;">
-                    <table cellpadding="0" cellspacing="0" class="ship_selection_table ncsp_ship_selection_table" id="mail">
+
+                    <table cellspacing="0" cellpadding="0" style="margin-bottom:0 !important; margin-top:-1px;">
+                        <tbody>
+                            <tr>
+                                <td class="ncsp_label">
+                                    <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${expes_ss_tooltip}">Mismo sistema solar</span>
+                                </td>
+                                <td class="ncsp_checkbox">
+                                    <input id="ncsp_checkbox_expes_ss" type="checkbox" value="" ${( settings.expes_ss===true ? "checked" : "" )}>
+                                </td>
+                            </tr>
+
+                            <tr id="ncsp_input_expes_ss_container" class="alt" style="${( settings.expes_ss===true ? "display:none;" : "" )}">
+                                <td class="ncsp_label">
+                                    <span>Introduzca sistema solar</span>
+                                </td>
+                                <td class="ncsp_input">
+                                    <input type="text" class="textRight textinput" size="3" id="ncsp_input_expes_ss" name="ncsp_input_expes_ss" value="${( settings.expes_ss!==true ? settings.expes_ss : 0 )}" autocomplete="off" style="margin-right:13px;">
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <table cellpadding="0" cellspacing="0" class="ship_selection_table ncsp_ship_selection_table" id="mail" style="margin-top:-1px;">
                         <tbody>
                             <tr>
                                 <td class="ship_txt_row textLeft images ncsp_ship_lbl">

@@ -927,10 +927,8 @@
             var expes_ships = settings.expes_ships;
 
             $.each(expes_ships, function(i, el){
-                if( el>0 ) {
-                    debugger;
+                if( el>0 )
                     $(document).find(`li.technology[data-technology=${i}][data-status="on"] > input`).focus().val(el);
-                }
             });
 
             /*OGame Infinity*/
@@ -938,7 +936,7 @@
                 $(".ogl-coords #positionInput").val(16).keyup();
             }
 
-            if( settings.expes_ss!==false ) {
+            if( !settings.expes_ss ) {
                 if( $(document).find(".ogl-harvestOptions").length>0 )
                     $(".ogl-coords #systemInput").val( parseInt(settings.expes_ss) ).keyup();
                 else

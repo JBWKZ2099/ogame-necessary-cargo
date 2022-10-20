@@ -936,11 +936,11 @@
                 $(".ogl-coords #positionInput").val(16).keyup();
             }
 
-            if( !settings.expes_ss ) {
+            if( typeof settings.expes_ss!="boolean" ) {
                 if( $(document).find(".ogl-harvestOptions").length>0 )
-                    $(".ogl-coords #systemInput").val( parseInt(settings.expes_ss) ).keyup();
+                    $(".ogl-coords #systemInput").val( settings.expes_ss ).keyup();
                 else
-                    $("#system").val( parseInt(settings.expes_ss) ).keyup();
+                    $("#system").val( settings.expes_ss ).keyup();
             }
 
 

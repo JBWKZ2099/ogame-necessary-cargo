@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Necessary cargo ships
 // @namespace    necessary_cargo
-// @version      1.92
+// @version      1.93
 // @description  Displays necessary cargo ships to move / transport the resources
 // @author       JBWKZ2099
 // @homepageURL  https://github.com/JBWKZ2099/ogame-necessary-cargo
@@ -73,11 +73,21 @@
     }
 
     /*se podrá eliminar en la siguiente update*/
-        if( JSON.parse(settings.config).expes_ss===undefined || JSON.parse(settings.config).expes_ss==null || JSON.parse(settings.config).expes_ss=="" ) {
-            var new_sett = JSON.parse( settings.config );
+        var first_key = Object.keys(JSON.parse(settings.config).planetList)[0],
+            validate_key = JSON.parse(settings.config).planetList[first_key].sent;
 
-            new_sett["expes_ss"] = true;
-            settings["config"] = JSON.stringify(new_sett);
+        if( validate_key===undefined || validate_key==null || validate_key=="" ) {
+            var _tmp_plist = JSON.parse(settings.config).planetList;
+            var _tmp_sett = JSON.parse(settings.config);
+
+            $.each(_tmp_plist, function(i ,el){
+                el["sent"] = "unset";
+                /*el["opacity"] = "1";
+                delete el.opacity;*/
+            });
+
+            _tmp_sett.planetList = _tmp_plist;
+            settings["config"] = JSON.stringify(_tmp_sett);
 
             localStorage.setItem(_localstorage_varname, JSON.stringify(settings));
         }
@@ -556,7 +566,6 @@
                 myPlanetList[planetKoords] = {};
             }
         }
-
         if( moonKoords==0 ) {
             myPlanetList[planetKoords]["sub_ncp"] = sub_ncp;
             myPlanetList[planetKoords]["sub_ncg"] = sub_ncg;
@@ -567,6 +576,8 @@
             myPlanetList[planetKoords]["tot_ncg"] = tot_ncg;
             myPlanetList[planetKoords]["tot_rec"] = tot_rec;
             myPlanetList[planetKoords]["tot_pf"] = tot_pf;
+
+            myPlanetList[planetKoords]["sent"] = "unset";
 
             current_settings["planetList"] = myPlanetList;
             new_pl_sett["config"] = JSON.stringify(current_settings);
@@ -652,6 +663,7 @@
                                 <th class="ncs-text-center ncs-text-blue tbl-th-ngc">NGC <br> <span style="${(!settings.full_fleet ? "display:none;" : "")}">%count_sub_ngc% |</span> %count_tot_ngc%</th>
                                 <th class="ncs-text-center ncs-text-blue tbl-th-rec">REC <br> <span style="${(!settings.full_fleet ? "display:none;" : "")}">%count_sub_rec% |</span> %count_tot_rec%</th>
                                 <th class="ncs-text-center ncs-text-blue tbl-th-pf">PF <br> <span style="${(!settings.full_fleet ? "display:none;" : "")}">%count_sub_pf% |</span> %count_tot_pf%</th>
+                                <th class="ncs-text-center ncs-text-blue tbl-th-pf">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>`;
@@ -661,7 +673,7 @@
                     galaxies.push(galaxy);
 
                     table_plist += `
-                        <tr class="${( i==planetKoords || i==_moonKoords ? "current" : "" )}" ${( i==planetKoords || i==_moonKoords ? "data-current" : "" )}>
+                        <tr class="${( i==planetKoords || i==_moonKoords ? "current" : "" )}${( el.sent!="unset" ? " sent" : "" )}" ${( i==planetKoords || i==_moonKoords ? "data-current" : "" )}>
                             <td class="ncs-text-center ncs-koords" valign="middle">
                                 ${i}
 
@@ -692,6 +704,9 @@
                                 </span>
                                 <span class="btn-tot ncs-setup-ship" data-galaxy="${galaxy}" data-cargo-type="tot" data-type="219" data-val="${(el.tot_pf).replace(".","")}">${el.tot_pf}</span>
                             </td>
+                            <td class="ncs-text-center">
+                                <button class="icon icon_trash remove-ncs-item"></button>
+                            </td>
                         </tr>
                     `;
 
@@ -704,19 +719,7 @@
                     count_tot_ngc += parseInt( (el.tot_ncg).replace(".", "") );
                     count_tot_rec += parseInt( (el.tot_rec).replace(".", "") );
                     count_tot_pf += parseInt( (el.tot_pf).replace(".", "") );
-
-                    // console.log( (el.tot_ncp).replace(".", "") );
-
                 });
-
-                // console.log( count_sub_npc );
-                // console.log( count_sub_ngc );
-                // console.log( count_sub_rec );
-                // console.log( count_sub_pf );
-                // console.log( count_tot_npc );
-                // console.log( count_tot_ngc );
-                // console.log( count_tot_rec );
-                // console.log( count_tot_pf );
 
                 table_plist += `
                         </tbody>
@@ -979,9 +982,14 @@
         });
 
         $(document).on("click", ".ncs-setup-ship", function(e){
-            var _val = $(this).attr("data-val");
-            var _type = $(this).attr("data-type");
-            var coords = (($(this).parent().parent().find(".ncs-koords").text()).split("[")[1]).split("]")[0];
+            var _val = $(this).attr("data-val"),
+                _type = $(this).attr("data-type"),
+                $_this_parent = $(this).parent().parent();
+
+            if( $(this).attr("class").indexOf("btn-sub")>-1 )
+                $_this_parent = $(this).parent().parent().parent();
+
+            var coords = (($_this_parent.find(".ncs-koords").text()).split("[")[1]).split("]")[0];
             var selected = $(this).parent().parent().find(".ncs-koords .selected");
 
             /*Se quita opacidad en los elementos que no están seleccionados para resaltar la opción seleccionada*/
@@ -989,8 +997,8 @@
                 $(document).find(".tbl-necesary-cargo.tbl-ncsp-planets tbody tr.current").addClass("hover");
                 $(document).find(".tbl-necesary-cargo.tbl-ncsp-planets tbody tr").removeClass("current");
 
-                $(this).parent().parent().css("opacity", "1");
-                $(this).parent().parent().addClass("current");
+                $_this_parent.css("opacity", "1");
+                $_this_parent.addClass("current");
             /*Se quita opacidad en los elementos que no están seleccionados para resaltar la opción seleccionada*/
 
             /*Se quita opacidad en las cantidades de flota que no fuern seleccionados*/
@@ -1058,6 +1066,27 @@
 
             $(this).parent().find("span").removeClass("selected");
             $(this).addClass("selected");
+        });
+
+        $(document).on("click", "#sendFleet", function(e){
+            var koords = $(document).find(".tbl-necesary-cargo.tbl-ncsp-planets .current .ncs-koords").text().trim();
+            var new_sett = {};
+            settings.planetList[koords].sent = "ok";
+            new_sett["config"] = JSON.stringify(settings);
+            localStorage.setItem(_localstorage_varname, JSON.stringify(new_sett));
+        });
+
+        $(document).on("click", ".remove-ncs-item", function(e){
+            e.preventDefault();
+
+            var koords = $(this).parent().parent().find(".ncs-koords").text().trim();
+            var new_sett = {};
+
+            delete settings.planetList[koords];
+            new_sett["config"] = JSON.stringify(settings);
+            localStorage.setItem(_localstorage_varname, JSON.stringify(new_sett));
+
+            $(this).parent().parent().remove();
         });
     /*Funcionalidad para almacenar la cantidad de naves necesarias en cada planeta*/
 
@@ -1206,6 +1235,10 @@
                 cursor: pointer;
             }
             .ncsp_ship_lbl { width: 120px !important; }
+
+            .tbl-necesary-cargo.tbl-ncsp-planets .sent, .sent:hover { opacity: 0.3 !important; }
+            .tbl-necesary-cargo.tbl-ncsp-planets .sent td { pointer-events: none !important; }
+            .tbl-necesary-cargo.tbl-ncsp-planets .sent td:last-child { pointer-events: all !important; }
         </style>
     `);
 

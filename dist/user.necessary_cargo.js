@@ -986,6 +986,9 @@
                 _type = $(this).attr("data-type"),
                 $_this_parent = $(this).parent().parent();
 
+            $(document).find(".tbl-necesary-cargo.tbl-ncsp-planets tr").removeClass("ncs-setup-ready");
+            $_this_parent.addClass("ncs-setup-ready");
+
             if( $(this).attr("class").indexOf("btn-sub")>-1 )
                 $_this_parent = $(this).parent().parent().parent();
 
@@ -1069,11 +1072,15 @@
         });
 
         $(document).on("click", "#sendFleet", function(e){
-            var koords = $(document).find(".tbl-necesary-cargo.tbl-ncsp-planets .current .ncs-koords").text().trim();
-            var new_sett = {};
-            settings.planetList[koords].sent = "ok";
-            new_sett["config"] = JSON.stringify(settings);
-            localStorage.setItem(_localstorage_varname, JSON.stringify(new_sett));
+            var ready = $(document).find(".tbl-necesary-cargo.tbl-ncsp-planets tr.ncs-setup-ready").length==1;
+
+            if( ready ) {
+                var koords = $(document).find(".tbl-necesary-cargo.tbl-ncsp-planets .current .ncs-koords").text().trim();
+                var new_sett = {};
+                settings.planetList[koords].sent = "ok";
+                new_sett["config"] = JSON.stringify(settings);
+                localStorage.setItem(_localstorage_varname, JSON.stringify(new_sett));
+            }
         });
 
         $(document).on("click", ".remove-ncs-item", function(e){

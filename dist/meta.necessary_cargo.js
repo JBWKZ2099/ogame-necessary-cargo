@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Necessary cargo ships
+// @name         OGame Redesign: Necessary cargo ships
 // @namespace    necessary_cargo
-// @version      1.92
+// @version      1.10.0
 // @description  Displays necessary cargo ships to move / transport the resources
 // @author       JBWKZ2099
 // @homepageURL  https://github.com/JBWKZ2099/ogame-necessary-cargo

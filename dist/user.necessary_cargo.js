@@ -20,7 +20,10 @@
     var theHref = location.href,
         uni = "s"+(/s(\d+)-(\w+)/.exec(window.location.href)[1]),
         lang = /s(\d+)-(\w+)/.exec(window.location.href)[2],
+        api_url = `https://${uni}-${lang}.ogame.gameforge.com/api`,
+        researchHref = theHref.split("/game")[0]+"/game/index.php?page=ingame&component=research",
         _localstorage_varname = `__LS_${uni}_${lang}_necessaryCargo`,
+        _localstorage_research = `UV_playerResearch`,
         _LS_val = {},
         ogame_version = parseVersion( $(`meta[name="ogame-version"]`).attr("content") ),
         unsafe = window;
@@ -34,14 +37,14 @@
     var settings = null;
 
     /*Check if tech data is on localStorage*/
-    if( typeof localStorage.UV_playerResearch==="undefined" ) {
+    if( typeof localStorage.getItem(_localstorage_research)==="undefined" || localStorage.getItem(_localstorage_research)==null ) {
         /*Redirect to research page*/
         if( theHref.indexOf("research")==-1 ) {
             var researchHref = theHref.split("/game")[0]+"/game/index.php?page=ingame&component=research";
             localStorage._previousURL_necessaryCargo = theHref;
             window.location.href = researchHref;
         } else {
-            localStorage.UV_playerResearch = "";
+            localStorage.setItem(_localstorage_research, "");
             var researches = "{";
 
             $("#technologies_basic ul > li").each(function(i, el){
@@ -70,7 +73,7 @@
 
             researches = researches.slice(0,-1)+"}";
 
-            localStorage.UV_playerResearch = researches;
+            localStorage.setItem(_localstorage_research, researches);
             window.location.href = localStorage._previousURL_necessaryCargo;
         }
     } else {
@@ -87,7 +90,7 @@
             metal_hour = resources_hour["metal"][0] + resources_hour["metal"][2],
             crystal_hour = resources_hour["crystal"][0] + resources_hour["crystal"][2],
             deuterium_hour = resources_hour["deuterium"][0] + resources_hour["deuterium"][2],
-            researches = JSON.parse( localStorage.UV_playerResearch ),
+            researches = JSON.parse( localStorage.getItem(_localstorage_research) ),
             hyperspace = researches[114],
             fighterLight_base = 50,
             fighterHeavy_base = 100,
@@ -403,8 +406,11 @@
     });
 
     $(document).on("click", "#ncs-reload", function(e){
-        localStorage.removeItem("UV_playerResearch");
-        localStorage.removeItem("__LS_s130_mx_necessaryCargo");
+        localStorage.removeItem(_localstorage_research);
+        localStorage.removeItem(_localstorage_varname);
+
+        /*localStorage.removeItem("UV_playerResearch");
+        localStorage.removeItem("__LS_s130_mx_necessaryCargo");*/
 
         $(document).find(".necesary-cargo").append(`<div class="ncsp-msg-reset">¡Se reiniciaron los ajustes!</div>`);
 
@@ -1507,9 +1513,9 @@
     function calcExpesCargos() {
         var explorer = $("#characterclass .characterclass").hasClass("explorer"),
             miner = $("#characterclass .characterclass").hasClass("miner"),
-            highscore_url = `https://s${uni}-${lang}.ogame.gameforge.com/api/highscore.xml?category=1&type=1`,
+            highscore_url = `${api_url}/highscore.xml?category=1&type=1`,
             eco_speed = parseInt($(`meta[name="ogame-universe-speed"]`).attr("content")),
-            hyperspace = JSON.parse(localStorage.UV_playerResearch)[114],
+            hyperspace = JSON.parse(localStorage.getItem(_localstorage_research))[114],
             top_highscore = getPlayerHighscore(highscore_url),
             max_total = 0,
             min_sc = 0,

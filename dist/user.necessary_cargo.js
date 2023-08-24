@@ -394,15 +394,13 @@
         if( !$(document).find("#ncsp_window").is(":visible") ) {
             $(main_content_div).hide();
             $(".maincontent").css({"z-index": "10"});
-            $(document).find("#ncsp_window").show();
             $(this).addClass("selected");
         } else {
             $(".maincontent").removeAttr("style");
-            $(document).find("#ncsp_window").hide();
             $(main_content_div).show();
-            $(".dinamic-jbwkz2099").hide();
             $(this).removeClass("selected");
         }
+        appendNCSPanel(settings);
     });
 
     $(document).on("click", "#ncs-reload", function(e){
@@ -495,8 +493,7 @@
         if( $(document).find("#ncsp_window").is(":visible") ) {
             $(".maincontent").removeAttr("style");
             $(main_content_div).show();
-            $(".dinamic-jbwkz2099").hide();
-            $(document).find("#ncsp_window").hide();
+            appendNCSPanel(settings);
         }
     });
 
@@ -1096,332 +1093,6 @@
         });
     /*Funcionalidad para almacenar la cantidad de naves necesarias en cada planeta*/
 
-    /* Styles for config panel */
-    $("html head").append(`
-        <style>
-            .simulate-button { cursor: pointer; }
-            #ncsp_window {
-                float: left;
-                position: relative;
-                width: 670px;
-                overflow: visible;
-                z-index: 2;
-            }
-            #ncsp_header {
-                height: 28px;
-                position: relative;
-                background: url("https://gf1.geo.gfsrv.net/cdn63/10e31cd5234445e4084558ea3506ea.gif") no-repeat scroll 0px 0px transparent;
-            }
-            #ncsp_header h4 {
-                height: 28px;
-                line-height: 28px;
-                text-align: center;
-                color: #6F9FC8;
-                font-size: 12px;
-                font-weight: bold;
-                position: absolute;
-                top: 0;
-                left: 100px;
-                right: 100px;
-            }
-            #ncsp_config_but {
-                display: block;
-                height: 16px;
-                width: 16px;
-                background: url("https://gf3.geo.gfsrv.net/cdne7/1f57d944fff38ee51d49c027f574ef.gif");
-                float: right;
-                margin: 8px 0 0 0;
-                opacity: 0.5;
-            }
-            #ncsp {
-                margin-top: -1px;
-            }
-            #ncsp_main {
-                padding: 15px 25px 0 25px;
-                background: url("https://gf1.geo.gfsrv.net/cdn9e/4f73643e86a952be4aed7fdd61805a.gif") repeat-y scroll 5px 0px transparent;
-            }
-            #ncsp_window.dinamic-jbwkz2099 table {
-                border: 1px solid #000;
-                margin: 0 0 20px 0;
-            }
-            #ncsp_window.dinamic-jbwkz2099 table.last {
-                margin: 0;
-            }
-            #ncsp_window table {
-                width: 620px;
-                background-color: #0D1014;
-                border-collapse: collapse;
-                clear: both;
-            }
-            #ncsp_main * {
-                font-size: 11px;
-            }
-            #ncsp_main tr, #ncsp_main td, #ncsp_main th {
-                height: 28px;
-                line-height: 28px;
-            }
-            #ncsp_main th {
-                color: #6F9FC8;
-                text-align: center;
-                font-weight: bold;
-            }
-            .ncsp_label {
-                padding: 0 5px 0 5px;
-                font-weight: bold;
-            }
-            .ncsp_label, .ncsp_label * {
-                color: grey;
-                text-align: left;
-            }
-            .ncsp_select {
-                width: 150px;
-                text-align: left;
-            }
-            .ncsp_input, .ncsp_output {
-                width: 112px;
-                padding: 0 2px 0 0;
-            }
-            .ncsp_input, .ncsp_checkbox { text-align: center; }
-            #ncsp_main input[type="text"] {
-                width: 100px;
-                text-align: center;
-            }
-            #ncsp_footer {
-                height: 17px;
-                background: url("https://gf1.geo.gfsrv.net/cdn30/aa3e8edec0a2681915b3c9c6795e6f.gif") no-repeat scroll 2px 0px transparent;
-            }
-
-            a.ncsp_menu_button {
-                padding: 3px 5px;
-                min-width: 204px;
-            }
-            .no-touch .btn_blue:hover, .btn_blue:active, .no-touch input.btn_blue:hover, input.btn_blue:active, .no-touch .ui-button:hover, .ui-button:active {
-                background: #59758f url(//gf2.geo.gfsrv.net/cdn71/f31afc3….png) 0 -27px repeat-x;
-                background: -moz-linear-gradient(top, #6e87a0 0%, #5d7ea2 17%, #7897b1 50%, #57799c 54%, #56789e 59%, #6a89ac 82%, #89a4bd 100%);
-                background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#6e87a0), color-stop(17%,#5d7ea2), color-stop(50%,#7897b1), color-stop(54%,#57799c), color-stop(59%,#56789e), color-stop(82%,#6a89ac), color-stop(100%,#89a4bd));
-                background: -webkit-linear-gradient(top, #6e87a0 0%,#5d7ea2 17%,#7897b1 50%,#57799c 54%,#56789e 59%,#6a89ac 82%,#89a4bd 100%);
-                background: -o-linear-gradient(top, #6e87a0 0%,#5d7ea2 17%,#7897b1 50%,#57799c 54%,#56789e 59%,#6a89ac 82%,#89a4bd 100%);
-                background: -ms-linear-gradient(top, #6e87a0 0%,#5d7ea2 17%,#7897b1 50%,#57799c 54%,#56789e 59%,#6a89ac 82%,#89a4bd 100%);
-                background: linear-gradient(to bottom, #6e87a0 0%,#5d7ea2 17%,#7897b1 50%,#57799c 54%,#56789e 59%,#6a89ac 82%,#89a4bd 100%);
-                border-color: #7E94AC #627F9C #546A7E #7494B4;
-                color: #fff;
-                text-shadow: 0 1px 2px #354a5e, 0 0 7px #8ca3bb;
-            }
-            .ncsp_label {
-                padding: 0 5px 0 5px;
-                font-weight: bold;
-            }
-            .ncsp_label, .ncsp_label * {
-              color: grey;
-              text-align: left;
-            }
-            .ncsp_cursor_help { cursor: help; }
-            .ncsp_below_resource_icon {
-                font-size: 9px;
-                bottom: -10px;
-                position: relative;
-            }
-            .ncsp-msg-saved {
-                color: #2FE000;
-                font-weight: bold;
-                background-color: rgba(0,0,0,0.65);
-            }
-            .ncsp-msg-reset {
-                color: #FF8D00;
-                font-weight: bold;
-                background-color: rgba(0,0,0,0.65);
-            }
-            .ncsp-no-margin { margin-bottom: 0 !important; padding-bottom: 0 !important; }
-            .ncsp_config_title {
-                font-size: 11px;
-                font-weight: bold;
-                color: #6F9FC8;
-                line-height: 22px;
-                background: url("http://gf1.geo.gfsrv.net/cdn0b/d55059f8c9bab5ebf9e8a3563f26d1.gif") no-repeat scroll 0 0 #13181D;
-                height: 22px;
-                margin: 0 0 10px 0;
-                padding: 0 0 0 40px;
-                border: 1px solid #000;
-                overflow: hidden;
-                cursor: pointer;
-            }
-            .ncsp_ship_lbl { width: 120px !important; }
-
-            .tbl-necesary-cargo.tbl-ncsp-planets .sent, .sent:hover { opacity: 0.3 !important; }
-            .tbl-necesary-cargo.tbl-ncsp-planets .sent td { pointer-events: none !important; }
-            .tbl-necesary-cargo.tbl-ncsp-planets .sent td:last-child { pointer-events: all !important; }
-        </style>
-    `);
-
-    /* HTML for config panel */
-    var extra_cargo_qty_tooltip = `Adicionar tiempo|<ol><li>Se calcularán los recursos generados en el lapso de tiempo establecido para sumar la cantidad de naves extra que se deben enviar.</li><li><b>Nota:</b> El tiempo establecido debe ser en minutos. <br> <b>Es importante tener en cuenta que si se actualiza este dato, se deberán recorrer nuevamente los planetas para ajustar las cantidades en la tabla de la pantalla de flota.</b></li></ol>`,
-        set_cargo_qty_tooltip = `Cantidad de naves|<ol><li>Los valores especificados en cada uno de los campos a continuación se adicionarán al total de naves; es decir, si se requieren 100 NCP y se especifican 50 en el campo correspondiente, el total de naves será ahora 150.</li><li><b>Nota:</b> El tiempo establecido se ignorará y únicamente se sumarán las cantidades de naves especificadas en los campos respectivos. <br> <b>Es importante tener en cuenta que si se actualiza este dato, se deberán recorrer nuevamente los planetas para ajustar las cantidades en la tabla de la pantalla de flota.</b></li></ol>`,
-        fleet_per_planet_tooltip = `Flota por planeta|<ol><li>Se mostrará la cantidad de flota necesaria para transportar los recursos en una tabla en la pantalla de Flota.</li></ol>`,
-        fleet_per_galaxy_tooltip = `Flota por galaxia|<ol><li>Se mostrará la cantidad de flota necesaria para transportar los recursos en una tabla en la pantalla de Flota. Este dato calcula la flota necesaria por galaxia para realizar el salto de las naves (Ejemplo: Si se tienen 5 planetas en G1 y la flota principal se encuentra en G3, se calculan las naves necesarias para transportar todos los recursos de G1 y realizar el salto de las naves necesarias que se encuentran en G3).</li></ol>`,
-        full_fleet_tooltip = `Flota completa|<ol><li>Se mostrará la cantidad de flota con y sin las naves adicionales para los recursos generados en cierto tiempo (este dato se configura en el campo 'Adicionar Tiempo').</li></ol>`,
-        ship_cargo_tooltip = `Capacidad de naves|<ol><li>Se mostrará la capacidad de carga de las naves en la vista Flota.</li></ol>`,
-        expes_ss_tooltip = `eo sistema solar|<ol><li>Si se marca la opción por defecto se seleccionará la posición actual para las expediciones, de lo contrario se podrá ingresar a qué sistema solar se desea enviar la flota.</li></ol>`;
-
-    $("#middle .maincontent").prepend(`
-        <div id="ncsp_window" class="dinamic-jbwkz2099" style="display:none;">
-            <div id="ncsp_header">
-                <h4>Naves necesarias para el transporte<span class="o_trade_calc_config_only"> » Configuración</span></h4>
-                <a id="ncsp_close" href="#" class="close_details close_ressources"></a>
-            </div>
-
-            <div id="ncsp_main">
-                <div class="ncsp_config_title ncsp-no-margin ncsp-accordion-trigger active">General</div>
-                <div id="ncsp" class="ncsp-accordion active" style="">
-                    <table cellspacing="0" cellpadding="0">
-                        <tbody>
-                            <tr>
-                                <td class="ncsp_label">
-                                    <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${extra_cargo_qty_tooltip}">
-                                        Tiempo adicional para naves extra
-                                    </span>
-                                </td>
-                                <td class="ncsp_input">
-                                    <input id="ncsp_time_qty" type="text" value="${settings.time}">
-                                </td>
-                            </tr>
-                            <tr class="alt">
-                                <td class="ncsp_label">
-                                    <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${set_cargo_qty_tooltip}">Fijar cantidad por cada tipo nave</span>
-                                </td>
-                                <td class="ncsp_checkbox">
-                                    <input id="ncsp_checkbox_qty" type="checkbox" value="" ${( settings.fixed_qty_checkbox ? "checked" : "" )}>
-                                </td>
-                            </tr>
-                            <tr class="ncsp-cargo-qty-input" style="${( settings.fixed_qty_checkbox ? "" : "display:none;" )}">
-                                <td class="ncsp_label">
-                                    <span>
-                                        Naves de Carga Pequeña (NCP)
-                                    </span>
-                                </td>
-                                <td class="ncsp_input">
-                                    <input name="ncp_qty" type="text" value="${settings.ncp_qty}">
-                                </td>
-                            </tr>
-                            <tr class="alt ncsp-cargo-qty-input" style="${( settings.fixed_qty_checkbox ? "" : "display:none;" )}">
-                                <td class="ncsp_label">
-                                    <span>
-                                        Naves de Carga Grande (NCG)
-                                    </span>
-                                </td>
-                                <td class="ncsp_input">
-                                    <input name="ncg_qty" type="text" value="${settings.ncg_qty}">
-                                </td>
-                            </tr>
-                            <tr class="ncsp-cargo-qty-input" style="${( settings.fixed_qty_checkbox ? "" : "display:none;" )}">
-                                <td class="ncsp_label">
-                                    <span>
-                                        Recicladores (REC)
-                                    </span>
-                                </td>
-                                <td class="ncsp_input">
-                                    <input name="rec_qty" type="text" value="${settings.rec_qty}">
-                                </td>
-                            </tr>
-                            <tr class="alt ncsp-cargo-qty-input" style="${( settings.fixed_qty_checkbox ? "" : "display:none;" )}">
-                                <td class="ncsp_label">
-                                    <span>
-                                        Exploradores (PF)
-                                    </span>
-                                </td>
-                                <td class="ncsp_input">
-                                    <input name="pf_qty" type="text" value="${settings.pf_qty}">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="ncsp_label">
-                                    <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${fleet_per_planet_tooltip}">
-                                        Mostrar flota por planeta
-                                    </span>
-                                </td>
-                                <td class="ncsp_checkbox">
-                                    <input id="fleet_per_planet" name="fleet_per_planet" type="checkbox" ${settings.fleet_per_planet ? "checked" : ""}>
-                                </td>
-                            </tr>
-                            <tr class="alt">
-                                <td class="ncsp_label">
-                                    <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${fleet_per_galaxy_tooltip}">
-                                        Mostrar flota por galaxia
-                                    </span>
-                                </td>
-                                <td class="ncsp_checkbox">
-                                    <input id="fleet_per_galaxy" name="fleet_per_galaxy" type="checkbox" ${settings.fleet_per_galaxy ? "checked" : ""}>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="ncsp_label">
-                                    <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${full_fleet_tooltip}">
-                                        Mostrar flota completa
-                                    </span>
-                                </td>
-                                <td class="ncsp_checkbox">
-                                    <input id="full_fleet" name="full_fleet" type="checkbox" ${settings.full_fleet ? "checked" : ""}>
-                                </td>
-                            </tr>
-                            <tr class="alt">
-                                <td class="ncsp_label">
-                                    <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${ship_cargo_tooltip}">
-                                        Mostrar capacidad de carga de cada nave
-                                    </span>
-                                </td>
-                                <td class="ncsp_checkbox">
-                                    <input id="ship_cargo" name="ship_cargo" type="checkbox" ${settings.ship_cargo ? "checked" : ""}>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="ncsp_config_title ncsp-no-margin ncsp-accordion-trigger">Configuración expediciones</div>
-                <div id="ncsp" class="ncsp-accordion" style="display:none;">
-
-                    <table cellspacing="0" cellpadding="0" style="margin-bottom:0 !important; margin-top:-1px;">
-                        <tbody>
-                            <tr>
-                                <td class="ncsp_label">
-                                    <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${expes_ss_tooltip}">Mismo sistema solar</span>
-                                </td>
-                                <td class="ncsp_checkbox">
-                                    <input id="ncsp_checkbox_expes_ss" type="checkbox" value="" ${( settings.expes_ss===true ? "checked" : "" )}>
-                                </td>
-                            </tr>
-
-                            <tr id="ncsp_input_expes_ss_container" class="alt" style="${( settings.expes_ss===true ? "display:none;" : "" )}">
-                                <td class="ncsp_label">
-                                    <span>Introduzca sistema solar</span>
-                                </td>
-                                <td class="ncsp_input">
-                                    <input type="text" class="textRight textinput" size="3" id="ncsp_input_expes_ss" name="ncsp_input_expes_ss" value="${( settings.expes_ss!==true ? settings.expes_ss : 0 )}" autocomplete="off" style="margin-right:13px;">
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div id="ncsp">
-                    <table cellspacing="0" cellpadding="0" class="last">
-                        <tbody>
-                            <tr>
-                                <td style="text-align:center;">
-                                    <a id="ncsp_btn_cancel" class="btn_blue ncsp_menu_button" href="#" style="color: inherit;">Cancelar</a>
-                                </td>
-                                <td style="text-align:center;">
-                                    <a id="ncsp_btn_save" class="btn_blue ncsp_menu_button" href="#" style="color: inherit;">Guardar</a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div id="ncsp_footer"></div>
-        </div>
-    `);
-
     function addDots(nStr) {
         nStr += '';
         var x = nStr.split('.');
@@ -1583,6 +1254,343 @@
         for (i in v)
             v[i]=parseInt(v[i]);
         return v;
+    }
+
+    function appendNCSPanel(settings) {
+        if( $("html head .ncs-style").length==0 ) {
+            /* Styles for config panel */
+            $("html head").append(`
+                <style class="ncs-style">
+                    .simulate-button { cursor: pointer; }
+                    #ncsp_window {
+                        float: left;
+                        position: relative;
+                        width: 670px;
+                        overflow: visible;
+                        z-index: 2;
+                    }
+                    #ncsp_header {
+                        height: 28px;
+                        position: relative;
+                        background: url("https://gf1.geo.gfsrv.net/cdn63/10e31cd5234445e4084558ea3506ea.gif") no-repeat scroll 0px 0px transparent;
+                    }
+                    #ncsp_header h4 {
+                        height: 28px;
+                        line-height: 28px;
+                        text-align: center;
+                        color: #6F9FC8;
+                        font-size: 12px;
+                        font-weight: bold;
+                        position: absolute;
+                        top: 0;
+                        left: 100px;
+                        right: 100px;
+                    }
+                    #ncsp_config_but {
+                        display: block;
+                        height: 16px;
+                        width: 16px;
+                        background: url("https://gf3.geo.gfsrv.net/cdne7/1f57d944fff38ee51d49c027f574ef.gif");
+                        float: right;
+                        margin: 8px 0 0 0;
+                        opacity: 0.5;
+                    }
+                    #ncsp {
+                        margin-top: -1px;
+                    }
+                    #ncsp_main {
+                        padding: 15px 25px 0 25px;
+                        background: url("https://gf1.geo.gfsrv.net/cdn9e/4f73643e86a952be4aed7fdd61805a.gif") repeat-y scroll 5px 0px transparent;
+                    }
+                    #ncsp_window.dinamic-jbwkz2099 table {
+                        border: 1px solid #000;
+                        margin: 0 0 20px 0;
+                    }
+                    #ncsp_window.dinamic-jbwkz2099 table.last {
+                        margin: 0;
+                    }
+                    #ncsp_window table {
+                        width: 620px;
+                        background-color: #0D1014;
+                        border-collapse: collapse;
+                        clear: both;
+                    }
+                    #ncsp_main * {
+                        font-size: 11px;
+                    }
+                    #ncsp_main tr, #ncsp_main td, #ncsp_main th {
+                        height: 28px;
+                        line-height: 28px;
+                    }
+                    #ncsp_main th {
+                        color: #6F9FC8;
+                        text-align: center;
+                        font-weight: bold;
+                    }
+                    .ncsp_label {
+                        padding: 0 5px 0 5px;
+                        font-weight: bold;
+                    }
+                    .ncsp_label, .ncsp_label * {
+                        color: grey;
+                        text-align: left;
+                    }
+                    .ncsp_select {
+                        width: 150px;
+                        text-align: left;
+                    }
+                    .ncsp_input, .ncsp_output {
+                        width: 112px;
+                        padding: 0 2px 0 0;
+                    }
+                    .ncsp_input, .ncsp_checkbox { text-align: center; }
+                    #ncsp_main input[type="text"] {
+                        width: 100px;
+                        text-align: center;
+                    }
+                    #ncsp_footer {
+                        height: 17px;
+                        background: url("https://gf1.geo.gfsrv.net/cdn30/aa3e8edec0a2681915b3c9c6795e6f.gif") no-repeat scroll 2px 0px transparent;
+                    }
+
+                    a.ncsp_menu_button {
+                        padding: 3px 5px;
+                        min-width: 204px;
+                    }
+                    .no-touch .btn_blue:hover, .btn_blue:active, .no-touch input.btn_blue:hover, input.btn_blue:active, .no-touch .ui-button:hover, .ui-button:active {
+                        background: #59758f url(//gf2.geo.gfsrv.net/cdn71/f31afc3….png) 0 -27px repeat-x;
+                        background: -moz-linear-gradient(top, #6e87a0 0%, #5d7ea2 17%, #7897b1 50%, #57799c 54%, #56789e 59%, #6a89ac 82%, #89a4bd 100%);
+                        background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#6e87a0), color-stop(17%,#5d7ea2), color-stop(50%,#7897b1), color-stop(54%,#57799c), color-stop(59%,#56789e), color-stop(82%,#6a89ac), color-stop(100%,#89a4bd));
+                        background: -webkit-linear-gradient(top, #6e87a0 0%,#5d7ea2 17%,#7897b1 50%,#57799c 54%,#56789e 59%,#6a89ac 82%,#89a4bd 100%);
+                        background: -o-linear-gradient(top, #6e87a0 0%,#5d7ea2 17%,#7897b1 50%,#57799c 54%,#56789e 59%,#6a89ac 82%,#89a4bd 100%);
+                        background: -ms-linear-gradient(top, #6e87a0 0%,#5d7ea2 17%,#7897b1 50%,#57799c 54%,#56789e 59%,#6a89ac 82%,#89a4bd 100%);
+                        background: linear-gradient(to bottom, #6e87a0 0%,#5d7ea2 17%,#7897b1 50%,#57799c 54%,#56789e 59%,#6a89ac 82%,#89a4bd 100%);
+                        border-color: #7E94AC #627F9C #546A7E #7494B4;
+                        color: #fff;
+                        text-shadow: 0 1px 2px #354a5e, 0 0 7px #8ca3bb;
+                    }
+                    .ncsp_label {
+                        padding: 0 5px 0 5px;
+                        font-weight: bold;
+                    }
+                    .ncsp_label, .ncsp_label * {
+                      color: grey;
+                      text-align: left;
+                    }
+                    .ncsp_cursor_help { cursor: help; }
+                    .ncsp_below_resource_icon {
+                        font-size: 9px;
+                        bottom: -10px;
+                        position: relative;
+                    }
+                    .ncsp-msg-saved {
+                        color: #2FE000;
+                        font-weight: bold;
+                        background-color: rgba(0,0,0,0.65);
+                    }
+                    .ncsp-msg-reset {
+                        color: #FF8D00;
+                        font-weight: bold;
+                        background-color: rgba(0,0,0,0.65);
+                    }
+                    .ncsp-no-margin { margin-bottom: 0 !important; padding-bottom: 0 !important; }
+                    .ncsp_config_title {
+                        font-size: 11px;
+                        font-weight: bold;
+                        color: #6F9FC8;
+                        line-height: 22px;
+                        background: url("http://gf1.geo.gfsrv.net/cdn0b/d55059f8c9bab5ebf9e8a3563f26d1.gif") no-repeat scroll 0 0 #13181D;
+                        height: 22px;
+                        margin: 0 0 10px 0;
+                        padding: 0 0 0 40px;
+                        border: 1px solid #000;
+                        overflow: hidden;
+                        cursor: pointer;
+                    }
+                    .ncsp_ship_lbl { width: 120px !important; }
+
+                    .tbl-necesary-cargo.tbl-ncsp-planets .sent, .sent:hover { opacity: 0.3 !important; }
+                    .tbl-necesary-cargo.tbl-ncsp-planets .sent td { pointer-events: none !important; }
+                    .tbl-necesary-cargo.tbl-ncsp-planets .sent td:last-child { pointer-events: all !important; }
+                </style>
+            `);
+        }
+
+        /* HTML for config panel */
+        var extra_cargo_qty_tooltip = `Adicionar tiempo|<ol><li>Se calcularán los recursos generados en el lapso de tiempo establecido para sumar la cantidad de naves extra que se deben enviar.</li><li><b>Nota:</b> El tiempo establecido debe ser en minutos. <br> <b>Es importante tener en cuenta que si se actualiza este dato, se deberán recorrer nuevamente los planetas para ajustar las cantidades en la tabla de la pantalla de flota.</b></li></ol>`,
+            set_cargo_qty_tooltip = `Cantidad de naves|<ol><li>Los valores especificados en cada uno de los campos a continuación se adicionarán al total de naves; es decir, si se requieren 100 NCP y se especifican 50 en el campo correspondiente, el total de naves será ahora 150.</li><li><b>Nota:</b> El tiempo establecido se ignorará y únicamente se sumarán las cantidades de naves especificadas en los campos respectivos. <br> <b>Es importante tener en cuenta que si se actualiza este dato, se deberán recorrer nuevamente los planetas para ajustar las cantidades en la tabla de la pantalla de flota.</b></li></ol>`,
+            fleet_per_planet_tooltip = `Flota por planeta|<ol><li>Se mostrará la cantidad de flota necesaria para transportar los recursos en una tabla en la pantalla de Flota.</li></ol>`,
+            fleet_per_galaxy_tooltip = `Flota por galaxia|<ol><li>Se mostrará la cantidad de flota necesaria para transportar los recursos en una tabla en la pantalla de Flota. Este dato calcula la flota necesaria por galaxia para realizar el salto de las naves (Ejemplo: Si se tienen 5 planetas en G1 y la flota principal se encuentra en G3, se calculan las naves necesarias para transportar todos los recursos de G1 y realizar el salto de las naves necesarias que se encuentran en G3).</li></ol>`,
+            full_fleet_tooltip = `Flota completa|<ol><li>Se mostrará la cantidad de flota con y sin las naves adicionales para los recursos generados en cierto tiempo (este dato se configura en el campo 'Adicionar Tiempo').</li></ol>`,
+            ship_cargo_tooltip = `Capacidad de naves|<ol><li>Se mostrará la capacidad de carga de las naves en la vista Flota.</li></ol>`,
+            expes_ss_tooltip = `eo sistema solar|<ol><li>Si se marca la opción por defecto se seleccionará la posición actual para las expediciones, de lo contrario se podrá ingresar a qué sistema solar se desea enviar la flota.</li></ol>`;
+
+        if( $(document).find("#ncsp_window").length==0 ) {
+            $("#middle .maincontent").after(`
+                <div id="ncsp_window" class="dinamic-jbwkz2099" style="display:block;">
+                    <div id="ncsp_header">
+                        <h4>Naves necesarias para el transporte<span class="o_trade_calc_config_only"> » Configuración</span></h4>
+                        <a id="ncsp_close" href="#" class="close_details close_ressources"></a>
+                    </div>
+
+                    <div id="ncsp_main">
+                        <div class="ncsp_config_title ncsp-no-margin ncsp-accordion-trigger active">General</div>
+                        <div id="ncsp" class="ncsp-accordion active" style="">
+                            <table cellspacing="0" cellpadding="0">
+                                <tbody>
+                                    <tr>
+                                        <td class="ncsp_label">
+                                            <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${extra_cargo_qty_tooltip}">
+                                                Tiempo adicional para naves extra
+                                            </span>
+                                        </td>
+                                        <td class="ncsp_input">
+                                            <input id="ncsp_time_qty" type="text" value="${settings.time}">
+                                        </td>
+                                    </tr>
+                                    <tr class="alt">
+                                        <td class="ncsp_label">
+                                            <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${set_cargo_qty_tooltip}">Fijar cantidad por cada tipo nave</span>
+                                        </td>
+                                        <td class="ncsp_checkbox">
+                                            <input id="ncsp_checkbox_qty" type="checkbox" value="" ${( settings.fixed_qty_checkbox ? "checked" : "" )}>
+                                        </td>
+                                    </tr>
+                                    <tr class="ncsp-cargo-qty-input" style="${( settings.fixed_qty_checkbox ? "" : "display:none;" )}">
+                                        <td class="ncsp_label">
+                                            <span>
+                                                Naves de Carga Pequeña (NCP)
+                                            </span>
+                                        </td>
+                                        <td class="ncsp_input">
+                                            <input name="ncp_qty" type="text" value="${settings.ncp_qty}">
+                                        </td>
+                                    </tr>
+                                    <tr class="alt ncsp-cargo-qty-input" style="${( settings.fixed_qty_checkbox ? "" : "display:none;" )}">
+                                        <td class="ncsp_label">
+                                            <span>
+                                                Naves de Carga Grande (NCG)
+                                            </span>
+                                        </td>
+                                        <td class="ncsp_input">
+                                            <input name="ncg_qty" type="text" value="${settings.ncg_qty}">
+                                        </td>
+                                    </tr>
+                                    <tr class="ncsp-cargo-qty-input" style="${( settings.fixed_qty_checkbox ? "" : "display:none;" )}">
+                                        <td class="ncsp_label">
+                                            <span>
+                                                Recicladores (REC)
+                                            </span>
+                                        </td>
+                                        <td class="ncsp_input">
+                                            <input name="rec_qty" type="text" value="${settings.rec_qty}">
+                                        </td>
+                                    </tr>
+                                    <tr class="alt ncsp-cargo-qty-input" style="${( settings.fixed_qty_checkbox ? "" : "display:none;" )}">
+                                        <td class="ncsp_label">
+                                            <span>
+                                                Exploradores (PF)
+                                            </span>
+                                        </td>
+                                        <td class="ncsp_input">
+                                            <input name="pf_qty" type="text" value="${settings.pf_qty}">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ncsp_label">
+                                            <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${fleet_per_planet_tooltip}">
+                                                Mostrar flota por planeta
+                                            </span>
+                                        </td>
+                                        <td class="ncsp_checkbox">
+                                            <input id="fleet_per_planet" name="fleet_per_planet" type="checkbox" ${settings.fleet_per_planet ? "checked" : ""}>
+                                        </td>
+                                    </tr>
+                                    <tr class="alt">
+                                        <td class="ncsp_label">
+                                            <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${fleet_per_galaxy_tooltip}">
+                                                Mostrar flota por galaxia
+                                            </span>
+                                        </td>
+                                        <td class="ncsp_checkbox">
+                                            <input id="fleet_per_galaxy" name="fleet_per_galaxy" type="checkbox" ${settings.fleet_per_galaxy ? "checked" : ""}>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ncsp_label">
+                                            <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${full_fleet_tooltip}">
+                                                Mostrar flota completa
+                                            </span>
+                                        </td>
+                                        <td class="ncsp_checkbox">
+                                            <input id="full_fleet" name="full_fleet" type="checkbox" ${settings.full_fleet ? "checked" : ""}>
+                                        </td>
+                                    </tr>
+                                    <tr class="alt">
+                                        <td class="ncsp_label">
+                                            <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${ship_cargo_tooltip}">
+                                                Mostrar capacidad de carga de cada nave
+                                            </span>
+                                        </td>
+                                        <td class="ncsp_checkbox">
+                                            <input id="ship_cargo" name="ship_cargo" type="checkbox" ${settings.ship_cargo ? "checked" : ""}>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="ncsp_config_title ncsp-no-margin ncsp-accordion-trigger">Configuración expediciones</div>
+                        <div id="ncsp" class="ncsp-accordion" style="display:none;">
+
+                            <table cellspacing="0" cellpadding="0" style="margin-bottom:0 !important; margin-top:-1px;">
+                                <tbody>
+                                    <tr>
+                                        <td class="ncsp_label">
+                                            <span class="ncsp_cursor_help tooltipHTML tpd-hideOnClickOutside" title="${expes_ss_tooltip}">Mismo sistema solar</span>
+                                        </td>
+                                        <td class="ncsp_checkbox">
+                                            <input id="ncsp_checkbox_expes_ss" type="checkbox" value="" ${( settings.expes_ss===true ? "checked" : "" )}>
+                                        </td>
+                                    </tr>
+
+                                    <tr id="ncsp_input_expes_ss_container" class="alt" style="${( settings.expes_ss===true ? "display:none;" : "" )}">
+                                        <td class="ncsp_label">
+                                            <span>Introduzca sistema solar</span>
+                                        </td>
+                                        <td class="ncsp_input">
+                                            <input type="text" class="textRight textinput" size="3" id="ncsp_input_expes_ss" name="ncsp_input_expes_ss" value="${( settings.expes_ss!==true ? settings.expes_ss : 0 )}" autocomplete="off" style="margin-right:13px;">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="ncsp">
+                            <table cellspacing="0" cellpadding="0" class="last">
+                                <tbody>
+                                    <tr>
+                                        <td style="text-align:center;">
+                                            <a id="ncsp_btn_cancel" class="btn_blue ncsp_menu_button" href="#" style="color: inherit;">Cancelar</a>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <a id="ncsp_btn_save" class="btn_blue ncsp_menu_button" href="#" style="color: inherit;">Guardar</a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="ncsp_footer"></div>
+                </div>
+            `);
+        } else {
+            if( !$(document).find("#ncsp_window").is(":visible") )
+                $(document).find("#ncsp_window").show()
+            else
+                $(document).find("#ncsp_window").hide()
+        }
     }
 })();
 

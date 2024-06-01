@@ -22,6 +22,7 @@
         lang = /s(\d+)-(\w+)/.exec(window.location.href)[2],
         api_url = `https://${uni}-${lang}.ogame.gameforge.com/api`,
         researchHref = theHref.split("/game")[0]+"/game/index.php?page=ingame&component=research",
+        fleet_dispatch_indexOf = theHref.indexOf("/game/index.php?page=ingame&component=fleetdispatch"),
         _localstorage_varname = `__LS_${uni}_${lang}_necessaryCargo`,
         _localstorage_research = `UV_playerResearch`,
         _LS_val = {},
@@ -614,7 +615,7 @@
             localStorage.setItem(_localstorage_varname, JSON.stringify(new_pl_sett));
         }
 
-        if( theHref.indexOf("/game/index.php?page=ingame&component=fleetdispatch")>-1 ) {
+        if( fleet_dispatch_indexOf>-1 ) {
             if( current_settings.fleet_per_planet===true || current_settings.fleet_per_galaxy===true || current_settings.full_fleet===true ) {
                 var count_sub_npc = 0,
                     count_sub_ngc = 0,

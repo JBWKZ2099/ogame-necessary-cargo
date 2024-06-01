@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OGame Redesign: Necessary cargo ships
 // @namespace    necessary_cargo
-// @version      1.10.1
+// @version      1.10.2
 // @description  Displays necessary cargo ships to move / transport the resources
 // @author       JBWKZ2099
 // @homepageURL  https://github.com/JBWKZ2099/ogame-necessary-cargo
@@ -34,7 +34,48 @@
         unsafe = unsafeWindow;
     } catch(e) {}
 
+    var max_cargos = calcExpesCargos(); /*Se calcula la cantidad máxima de cargueras grandes y/o pequeñas para ser enviadas en las expes*/
     var settings = null;
+
+    if( typeof localStorage.getItem(_localstorage_varname)=="undefined" || localStorage.getItem(_localstorage_varname)==null ) {
+        var conf = {},
+            settings = {},
+            expes_ships = {};
+
+        expes_ships[202] = max_cargos.max_sc;  /*NPC*/
+        expes_ships[203] = max_cargos.max_lc;  /*NGC*/
+        expes_ships[204] = 0;   /*Lig*/
+        expes_ships[205] = 0;   /*Pes*/
+        expes_ships[206] = 0;   /*Cru*/
+        expes_ships[207] = 0;   /*Nb*/
+        expes_ships[208] = 0;
+        expes_ships[209] = 0;
+        expes_ships[210] = 1;  /*Son*/
+        expes_ships[211] = 0;   /*Des*/
+        expes_ships[213] = 0;   /*Aco*/
+        expes_ships[214] = 0;
+        expes_ships[215] = 0;   /*Bb*/
+        expes_ships[218] = 1;   /*RR*/
+        expes_ships[219] = 1;   /*PF*/
+
+        conf["expes_ss"] = true;
+        conf["expes_ships"] = expes_ships;
+        conf["time"] = "60";
+        conf["fixed_qty_checkbox"] = false;
+        conf["fleet_per_planet"] = true;
+        conf["fleet_per_galaxy"] = true;
+        conf["full_fleet"] = true;
+        conf["ship_cargo"] = false;
+        conf["ncp_qty"] = "0";
+        conf["ncg_qty"] = "0";
+        conf["rec_qty"] = "0";
+        conf["pf_qty"] = "0";
+
+        settings["config"] = JSON.stringify(conf);
+        localStorage.setItem(_localstorage_varname, JSON.stringify(settings));
+    }
+
+    // debugger;
 
     /*Check if tech data is on localStorage*/
     if( typeof localStorage.getItem(_localstorage_research)==="undefined" || localStorage.getItem(_localstorage_research)==null ) {
@@ -335,8 +376,6 @@
             </div>
         `);
     }
-
-    var max_cargos = calcExpesCargos(); /*Se calcula la cantidad máxima de cargueras grandes y/o pequeñas para ser enviadas en las expes*/
 
     if( localStorage.getItem(_localstorage_varname) )
         settings = JSON.parse(localStorage.getItem(_localstorage_varname));
@@ -1110,7 +1149,7 @@
         var settings = JSON.parse( JSON.parse(localStorage.getItem(_localstorage_varname)).config );
 
         var pattern_match=/\">(.*?)<\/span/gi;
-        var box_content = $(`#${type}_box`).attr("title").match(pattern_match);
+        var box_content = $(`#${type}_box`).attr("data-tooltip-title").match(pattern_match);
         box_content[0] = $(`#resources_${type}`).attr("data-raw");
 
         for(i in box_content)
